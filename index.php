@@ -1966,74 +1966,95 @@ function updateBookmarkCount() {
   }
 }
 
-/* ===== COMMENTS SYSTEM ===== */
-let _inMemoryComments = {};
-
-function getComments(articleId) {
-  let allComments = {};
-  try {
-    allComments = JSON.parse(localStorage.getItem('ari_comments') || '{}');
-  } catch (e) {
-    allComments = _inMemoryComments;
-  }
-  return allComments[articleId] || [
-    { name: 'Ahmad Fauzi', text: 'Pembahasan yang sangat mendalam dan berbobot. Senang membaca ulasan di Pucuk Pena.', date: '2 jam yang lalu' },
-    { name: 'Siti Rahma', text: 'Setuju sekali. Sangat relevan dengan kondisi lapangan saat ini.', date: '1 jam yang lalu' }
-  ];
+/* ===== XSS SANITIZER ===== */
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
-function addComment(articleId, name, text) {
-  if (!name.trim() || !text.trim()) return;
-  let allComments = {};
-  try {
-    allComments = JSON.parse(localStorage.getItem('ari_comments') || '{}');
-  } catch (e) {
-    allComments = _inMemoryComments;
-  }
-  if (!allComments[articleId]) allComments[articleId] = getComments(articleId);
-  allComments[articleId].unshift({
-    name: name,
-    text: text,
-    date: 'Baru saja'
-  });
-  try {
-    localStorage.setItem('ari_comments', JSON.stringify(allComments));
-  } catch (e) {
-    console.error('Gagal menulis komentar ke localStorage:', e);
-    _inMemoryComments = allComments;
-  }
-  renderComments(articleId);
-}
-
-function renderComments(articleId) {
-  const comments = getComments(articleId);
+/* ===== COMMENTS SYSTEM (DATABASE DRIVEN) ===== */
+async function renderComments(articleId) {
   const container = document.getElementById('commentsList');
   if (!container) return;
-  container.innerHTML = comments.map(c => `
-    <div style="padding:12px 0;border-bottom:1px solid var(--border-color);display:flex;gap:12px;align-items:start">
-      <div class="avatar" style="width:32px;height:32px;font-size:0.75rem;flex-shrink:0">${c.name.charAt(0)}</div>
-      <div>
-        <div style="display:flex;gap:8px;align-items:center"><strong style="font-size:0.85rem;color:var(--text-main)">${c.name}</strong><span style="font-size:0.7rem;color:var(--gray-400)">${c.date}</span></div>
-        <p style="font-size:0.82rem;color:var(--text-muted);margin-top:4px">${c.text}</p>
+  container.innerHTML = '<div style="padding:16px 0;color:var(--text-muted);font-size:0.85rem">Memuat komentar...</div>';
+  try {
+    const res = await fetch('api.php?action=comments&article_id=' + encodeURIComponent(articleId));
+    const comments = await res.json();
+    if (!Array.isArray(comments) || comments.length === 0) {
+      container.innerHTML = '<div style="padding:16px 0;color:var(--text-muted);font-size:0.85rem">Belum ada komentar. Jadilah yang pertama berkomentar!</div>';
+      return;
+    }
+    container.innerHTML = comments.map(c => `
+      <div style="padding:14px 0;border-bottom:1px solid var(--border-color);display:flex;gap:12px;align-items:flex-start">
+        <div class="avatar" style="width:36px;height:36px;font-size:0.85rem;flex-shrink:0;background:var(--green-700);color:#fff;border-radius:50%;display:grid;place-items:center;font-weight:700">
+          ${escapeHtml((c.name || 'P').charAt(0).toUpperCase())}
+        </div>
+        <div style="flex:1">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <strong style="font-size:0.88rem;color:var(--text-main)">${escapeHtml(c.name)}</strong>
+            <span style="font-size:0.72rem;color:var(--gray-400)">${escapeHtml(c.date || '')}</span>
+          </div>
+          <p style="font-size:0.85rem;color:var(--text-muted);margin-top:5px;line-height:1.5;white-space:pre-line">${escapeHtml(c.comment || c.text || '')}</p>
+        </div>
       </div>
-    </div>
-  `).join('');
+    `).join('');
+  } catch (e) {
+    console.error('Gagal mengambil komentar:', e);
+    container.innerHTML = '<div style="padding:16px 0;color:var(--text-muted);font-size:0.85rem">Belum ada komentar atau gagal terhubung ke server.</div>';
+  }
 }
 
-window.submitComment = function(id) {
+window.submitComment = async function(id) {
   const nameEl = document.getElementById('commenterName');
   const textEl = document.getElementById('commenterText');
   if (!nameEl || !textEl) return;
-  const name = nameEl.value;
-  const text = textEl.value;
-  if (!name.trim() || !text.trim()) {
+  const name = nameEl.value.trim();
+  const text = textEl.value.trim();
+  if (!name || !text) {
     showToast('Mohon lengkapi nama dan isi komentar.');
     return;
   }
-  addComment(id, name, text);
-  nameEl.value = '';
-  textEl.value = '';
-  showToast('Komentar terkirim!');
+
+  const btn = document.querySelector('#commentsList')?.previousElementSibling?.querySelector('button');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Mengirim...';
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('article_id', id);
+    formData.append('name', name);
+    formData.append('comment', text);
+
+    const res = await fetch('api.php?action=add_comment', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      nameEl.value = '';
+      textEl.value = '';
+      showToast('Komentar berhasil dikirim!');
+      await renderComments(id);
+    } else {
+      showToast(data.error || 'Gagal mengirim komentar.');
+    }
+  } catch (e) {
+    console.error('Gagal kirim komentar:', e);
+    showToast('Gagal mengirim komentar. Periksa koneksi server.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Kirim Komentar';
+    }
+  }
 };
 
 /* ===== STORIES SYSTEM (MOBILE) ===== */
@@ -2720,6 +2741,11 @@ function renderAds() {
     if (ad.type === 'google' && ad.google_client && !ad.google_client.includes('XXXX')) {
       lbEl.innerHTML = `<ins class="adsbygoogle" style="display:block;width:100%;max-width:970px;height:90px" data-ad-client="${ad.google_client}" data-ad-slot="${ad.google_slot}"></ins>`;
       try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+    } else if (ad.image || ad.img) {
+      const imgSrc = ad.image || ad.img;
+      lbEl.innerHTML = `<div onclick="if('${ad.url || ''}')window.open('${ad.url}','_blank')" style="cursor:pointer;width:100%;text-align:center;padding:4px 0">
+        <img src="${imgSrc}" alt="${escapeHtml(ad.name || 'Iklan')}" style="max-width:100%;height:auto;max-height:110px;border-radius:8px;object-fit:contain;margin:0 auto;display:block;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+      </div>`;
     } else if (ad.content) {
       lbEl.innerHTML = `<div onclick="if('${ad.url || ''}')window.open('${ad.url}','_blank')" style="cursor:pointer;width:100%;text-align:center;padding:10px">${ad.content}</div>`;
     }
@@ -2759,20 +2785,32 @@ function renderAds() {
 }
 
 function renderNativeAd(el, ad) {
-  if (!ad || !ad.content) return;
-  const parts = ad.content.split('|');
+  if (!ad) return;
+  const imgSrc = ad.image || ad.img;
+  if (imgSrc) {
+    el.innerHTML = `
+      <div style="width:100%;cursor:pointer;overflow:hidden;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);transition:transform 0.2s ease" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
+        <img src="${imgSrc}" alt="${escapeHtml(ad.name || 'Iklan')}" style="width:100%;height:auto;display:block;border-radius:10px;object-fit:cover">
+      </div>`;
+    el.style.cursor = 'pointer';
+    if (ad.url) {
+      el.onclick = () => window.open(ad.url, '_blank');
+    }
+    return;
+  }
+  const parts = (ad.content || '').split('|');
   if (parts.length >= 4) {
     const [emoji, title, desc, cta] = parts;
     el.innerHTML = `
       <div class="ad-thumb" style="display:grid;place-items:center;width:48px;height:48px;background:rgba(5,150,105,0.08);border-radius:10px;flex-shrink:0;color:var(--green-700)">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-  </div>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+      </div>
       <div style="flex:1">
-        <h4 style="margin:0 0 4px;font-size:0.95rem;font-weight:700;color:var(--text-primary)">${title}</h4>
-        <p style="margin:0 0 8px;font-size:0.83rem;color:var(--text-secondary);line-height:1.4">${desc}</p>
-        <span class="ad-cta" style="display:inline-block;padding:4px 12px;background:var(--green-600);color:#fff;border-radius:6px;font-size:0.75rem;font-weight:600">${cta}</span>
+        <h4 style="margin:0 0 4px;font-size:0.95rem;font-weight:700;color:var(--text-primary)">${escapeHtml(title)}</h4>
+        <p style="margin:0 0 8px;font-size:0.83rem;color:var(--text-secondary);line-height:1.4">${escapeHtml(desc)}</p>
+        <span class="ad-cta" style="display:inline-block;padding:4px 12px;background:var(--green-600);color:#fff;border-radius:6px;font-size:0.75rem;font-weight:600">${escapeHtml(cta)}</span>
       </div>`;
-  } else {
+  } else if (ad.content) {
     el.innerHTML = `<div style="padding:12px">${ad.content}</div>`;
   }
   el.style.cursor = 'pointer';

@@ -67,6 +67,8 @@ switch ($action) {
                 'name'          => $r['name'],
                 'type'          => $r['type'],
                 'slot'          => $r['slot'],
+                'image'         => $r['image'] ?? '',
+                'img'           => $r['image'] ?? '',
                 'content'       => $r['content'],
                 'google_client' => $r['google_client'],
                 'google_slot'   => $r['google_slot'],
@@ -76,12 +78,109 @@ switch ($action) {
         echo json_encode($ads, JSON_UNESCAPED_UNICODE);
         break;
 
+    // ── GET COMMENTS (BY ARTICLE ID) ─────────────────────────────────────────
+    case 'comments':
+        $articleId = (int)($_GET['article_id'] ?? 0);
+        if ($articleId <= 0) {
+            echo json_encode([]);
+            break;
+        }
+        $stmt = getDB()->prepare("SELECT id, article_id, name, comment, created_at FROM comments WHERE article_id = ? ORDER BY id DESC");
+        $stmt->execute([$articleId]);
+        $rows = $stmt->fetchAll();
+        $out = [];
+        foreach ($rows as $r) {
+            $timeDiff = time() - strtotime($r['created_at']);
+            if ($timeDiff < 60) {
+                $dateDisplay = 'Baru saja';
+            } elseif ($timeDiff < 3600) {
+                $dateDisplay = floor($timeDiff / 60) . ' menit yang lalu';
+            } elseif ($timeDiff < 86400) {
+                $dateDisplay = floor($timeDiff / 3600) . ' jam yang lalu';
+            } elseif ($timeDiff < 604800) {
+                $dateDisplay = floor($timeDiff / 86400) . ' hari yang lalu';
+            } else {
+                $dateDisplay = date('d M Y, H:i', strtotime($r['created_at']));
+            }
+            $out[] = [
+                'id'         => (int)$r['id'],
+                'article_id' => (int)$r['article_id'],
+                'name'       => $r['name'],
+                'comment'    => $r['comment'],
+                'text'       => $r['comment'],
+                'created_at' => $r['created_at'],
+                'date'       => $dateDisplay,
+            ];
+        }
+        echo json_encode($out, JSON_UNESCAPED_UNICODE);
+        break;
+
+    // ── ADD COMMENT (POST) ───────────────────────────────────────────────────
+    case 'add_comment':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            break;
+        }
+        $articleId = (int)($_POST['article_id'] ?? 0);
+        $name      = trim(strip_tags($_POST['name'] ?? ''));
+        $comment   = trim(strip_tags($_POST['comment'] ?? $_POST['text'] ?? ''));
+
+        if ($articleId <= 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'ID artikel tidak valid']);
+            break;
+        }
+        if (empty($name) || empty($comment)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Nama dan isi komentar wajib diisi']);
+            break;
+        }
+        if (mb_strlen($name) > 100) $name = mb_substr($name, 0, 100);
+        if (mb_strlen($comment) > 3000) $comment = mb_substr($comment, 0, 3000);
+
+        $db = getDB();
+        $stmt = $db->prepare("INSERT INTO comments (article_id, name, comment) VALUES (?, ?, ?)");
+        $stmt->execute([$articleId, $name, $comment]);
+        $newId = (int)$db->lastInsertId();
+
+        echo json_encode([
+            'success' => true,
+            'comment' => [
+                'id'         => $newId,
+                'article_id' => $articleId,
+                'name'       => $name,
+                'comment'    => $comment,
+                'text'       => $comment,
+                'date'       => 'Baru saja',
+            ]
+        ], JSON_UNESCAPED_UNICODE);
+        break;
+
+    // ── DELETE COMMENT (ADMIN ONLY) ──────────────────────────────────────────
+    case 'delete_comment':
+        session_start();
+        if (empty($_SESSION['admin_logged_in'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized']);
+            break;
+        }
+        $id = (int)($_POST['id'] ?? $_GET['id'] ?? 0);
+        if ($id > 0) {
+            getDB()->prepare("DELETE FROM comments WHERE id = ?")->execute([$id]);
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['error' => 'ID tidak valid']);
+        }
+        break;
+
     // ── GET BREAKING NEWS ─────────────────────────────────────────────────────
     case 'breaking':
         $stmt = getDB()->query("SELECT text FROM breaking_news WHERE active = 1 ORDER BY sort_order ASC, id ASC");
         $rows = $stmt->fetchAll(PDO::FETCH_COLUMN);
         echo json_encode($rows, JSON_UNESCAPED_UNICODE);
         break;
+
 
     // ── ADMIN: SAVE ARTICLE (POST) ───────────────────────────────────────────
     case 'save_article':
@@ -166,6 +265,7 @@ switch ($action) {
         $name   = trim($_POST['name'] ?? '');
         $type   = ($_POST['type'] ?? 'manual') === 'google' ? 'google' : 'manual';
         $slot   = trim($_POST['slot'] ?? '');
+        $image  = trim($_POST['image'] ?? '');
         $cnt    = trim($_POST['content'] ?? '');
         $gclt   = trim($_POST['google_client'] ?? '');
         $gslot  = trim($_POST['google_slot'] ?? '');
@@ -174,11 +274,11 @@ switch ($action) {
 
         $db = getDB();
         if ($id > 0) {
-            $stmt = $db->prepare("UPDATE ads SET name=?, type=?, slot=?, content=?, google_client=?, google_slot=?, url=?, active=? WHERE id=?");
-            $stmt->execute([$name, $type, $slot, $cnt, $gclt, $gslot, $url, $active, $id]);
+            $stmt = $db->prepare("UPDATE ads SET name=?, type=?, slot=?, image=?, content=?, google_client=?, google_slot=?, url=?, active=? WHERE id=?");
+            $stmt->execute([$name, $type, $slot, $image, $cnt, $gclt, $gslot, $url, $active, $id]);
         } else {
-            $stmt = $db->prepare("INSERT INTO ads (name, type, slot, content, google_client, google_slot, url, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$name, $type, $slot, $cnt, $gclt, $gslot, $url, $active]);
+            $stmt = $db->prepare("INSERT INTO ads (name, type, slot, image, content, google_client, google_slot, url, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$name, $type, $slot, $image, $cnt, $gclt, $gslot, $url, $active]);
         }
         header('Location: ../admin/ads.php?saved=1');
         exit;

@@ -151,16 +151,33 @@ CREATE TABLE `ads` (
   `google_slot` varchar(100) DEFAULT NULL,
   `url` varchar(500) DEFAULT NULL,
   `active` tinyint(1) DEFAULT '1',
+  `image` varchar(500) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-INSERT INTO `ads` (`id`, `name`, `type`, `slot`, `content`, `google_client`, `google_slot`, `url`, `active`, `created_at`) VALUES
-('1', 'GreenLife Insurance — Leaderboard', 'manual', 'leaderboard', '<strong style=\"color:var(--green-700)\">🌿 GreenLife Insurance</strong> — Proteksi keluarga Anda mulai Rp50rb/bulan · <u>Klik di sini</u>', NULL, NULL, 'https://example.com/greenlife', '1', '2026-09-07 07:35:01'),
-('2', 'AriTel 5G — Native Feed', 'manual', 'native1', '📱|AriTel 5G — Internet Super Cepat di Seluruh Indonesia|Paket unlimited mulai 89rb. Gratis router untuk pelanggan baru!|Pelajari Lebih Lanjut', NULL, NULL, 'https://example.com/aritel', '1', '2026-09-07 07:35:01'),
-('3', 'Kopi Nusantara — Native Sidebar', 'manual', 'native2', '☕|Kopi Nusantara Premium|Rasakan cita rasa kopi lokal terbaik. Diskon 20%!|Beli Sekarang', NULL, NULL, 'https://example.com/kopi', '1', '2026-09-07 07:35:01'),
-('4', 'Google Ads — Rectangle 300x250', 'google', 'google_rectangle', '', 'ca-pub-XXXXXXXXXXXXXXXX', '1234567890', '', '1', '2026-09-07 07:35:01'),
-('5', 'Google Ads — Sticky Bottom', 'google', 'google_sticky', '', 'ca-pub-XXXXXXXXXXXXXXXX', '0987654321', '', '1', '2026-09-07 07:35:01');
+INSERT INTO `ads` (`id`, `name`, `type`, `slot`, `content`, `google_client`, `google_slot`, `url`, `active`, `image`, `created_at`) VALUES
+('1', 'GreenLife Insurance — Leaderboard', 'manual', 'leaderboard', '', NULL, NULL, 'https://example.com/greenlife', '1', 'img/desa_wisata.png', '2026-09-07 07:35:01'),
+('2', 'AriTel 5G — Native Feed', 'manual', 'native1', '', NULL, NULL, 'https://example.com/aritel', '1', 'img/ai_startup.png', '2026-09-07 07:35:01'),
+('3', 'Kopi Nusantara — Native Sidebar', 'manual', 'native2', '', NULL, NULL, 'https://example.com/kopi', '1', 'img/timnas_football.png', '2026-09-07 07:35:01'),
+('4', 'Google Ads — Rectangle 300x250', 'google', 'google_rectangle', '', 'ca-pub-XXXXXXXXXXXXXXXX', '1234567890', '', '1', NULL, '2026-09-07 07:35:01'),
+('5', 'Google Ads — Sticky Bottom', 'google', 'google_sticky', '', 'ca-pub-XXXXXXXXXXXXXXXX', '0987654321', '', '1', NULL, '2026-09-07 07:35:01');
+
+DROP TABLE IF EXISTS `comments`;
+CREATE TABLE `comments` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `article_id` int NOT NULL,
+  `name` varchar(150) NOT NULL,
+  `comment` text NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `article_id` (`article_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+INSERT INTO `comments` (`id`, `article_id`, `name`, `comment`, `created_at`) VALUES
+('1', '1', 'Ahmad Fauzi', 'Pembahasan yang sangat mendalam dan berbobot. Senang membaca ulasan di Pucuk Pena.', '2026-09-07 08:35:01'),
+('2', '1', 'Siti Rahma', 'Setuju sekali. Sangat relevan dengan kondisi lapangan saat ini.', '2026-09-07 09:35:01');
+
 
 DROP TABLE IF EXISTS `breaking_news`;
 CREATE TABLE `breaking_news` (

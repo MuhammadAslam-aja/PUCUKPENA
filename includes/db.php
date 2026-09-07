@@ -65,6 +65,41 @@ function getDB(): PDO {
         // Lanjutkan jika auto-seed ada kendala minor
     }
 
+    // 3. Auto-migration: Pastikan tabel comments & kolom ads.image selalu ada
+    try {
+        // Tabel comments
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `comments` (
+            `id` int NOT NULL AUTO_INCREMENT,
+            `article_id` int NOT NULL,
+            `name` varchar(150) NOT NULL,
+            `comment` text NOT NULL,
+            `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `article_id` (`article_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        // Seed komentar awal jika tabel masih kosong
+        $commCount = $pdo->query("SELECT COUNT(*) FROM `comments`")->fetchColumn();
+        if ((int)$commCount === 0) {
+            $pdo->exec("INSERT INTO `comments` (`article_id`, `name`, `comment`, `created_at`) VALUES
+                (1, 'Ahmad Fauzi', 'Pembahasan yang sangat mendalam dan berbobot. Senang membaca ulasan di Pucuk Pena.', NOW() - INTERVAL 2 HOUR),
+                (1, 'Siti Rahma', 'Setuju sekali. Sangat relevan dengan kondisi lapangan saat ini.', NOW() - INTERVAL 1 HOUR)");
+        }
+
+        // Kolom image pada tabel ads
+        $colCheck = $pdo->query("SHOW COLUMNS FROM `ads` LIKE 'image'")->rowCount();
+        if ($colCheck === 0) {
+            $pdo->exec("ALTER TABLE `ads` ADD COLUMN `image` varchar(500) DEFAULT NULL AFTER `active`");
+            // Set gambar default jika kosong
+            $pdo->exec("UPDATE `ads` SET `image` = 'img/desa_wisata.png' WHERE `slot` = 'leaderboard' AND (`image` IS NULL OR `image` = '')");
+            $pdo->exec("UPDATE `ads` SET `image` = 'img/ai_startup.png' WHERE `slot` = 'native1' AND (`image` IS NULL OR `image` = '')");
+            $pdo->exec("UPDATE `ads` SET `image` = 'img/timnas_football.png' WHERE `slot` = 'native2' AND (`image` IS NULL OR `image` = '')");
+        }
+    } catch (Exception $e) {
+        // Lanjutkan jika migrasi telah terpasang
+    }
+
+
     return $pdo;
 }
 
