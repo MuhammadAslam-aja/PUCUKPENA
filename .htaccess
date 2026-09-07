@@ -1,0 +1,8 @@
+# Pucuk Pena Apache Configuration
+DirectoryIndex index.php index.html
+
+# Prevent directory browsing
+Options -Indexes
+
+# UTF-8 Encoding
+AddDefaultCharset UTF-8

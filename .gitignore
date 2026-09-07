@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Environment / Local settings
+.env
+.env.local
+
+# Logs
+*.log
+
+# Scratch / Temporary test files
+scratch/
+test_*.html
+test_*.js
+inspect_*.js
+
+# OS Files
+Thumbs.db
+.DS_Store
