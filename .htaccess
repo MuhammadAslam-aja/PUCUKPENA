@@ -6,3 +6,11 @@ Options -Indexes
 
 # UTF-8 Encoding
 AddDefaultCharset UTF-8
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+# Automatic alias/redirect if user accidentally includes /ARIWEB/ in Railway URL
+RewriteRule ^ARIWEB/(.*)$ /$1 [R=301,L,NC]
+RewriteRule ^ARIWEB$ / [R=301,L,NC]
+</IfModule>
