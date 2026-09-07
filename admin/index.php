@@ -167,7 +167,7 @@ $recentArticles  = $db->query("SELECT id, title, type, cat, badge, status, autho
         <div class="panel-body" style="font-size:0.85rem;color:var(--gray-600);line-height:2">
           <div>Database: <b>ariweb</b></div>
           <div>Versi PHP: <b><?= PHP_VERSION ?></b></div>
-          <div>Website: <a href="../" target="_blank" style="color:var(--green-700)">/ARIWEB/</a></div>
+          <div>Website: <a href="../" target="_blank" style="color:var(--green-700)">Lihat Website</a></div>
           <div>Folder Uploads: <a href="../uploads/" style="color:var(--green-700)">/uploads/</a></div>
           <div>Waktu Server: <b><?= date('d M Y H:i:s') ?></b></div>
         </div>

@@ -14,4 +14,12 @@ rm -f /var/run/apache2/apache2.pid
 sed -i "s/Listen [0-9]*/Listen $PORT/g" /etc/apache2/ports.conf
 sed -i "s/<VirtualHost \*:[0-9]*>/<VirtualHost *:$PORT>/g" /etc/apache2/sites-available/000-default.conf
 
+# Configure reverse proxy friendliness
+grep -q "UseCanonicalPhysicalPort Off" /etc/apache2/apache2.conf || cat << 'EOF' >> /etc/apache2/apache2.conf
+ServerName localhost
+UseCanonicalName Off
+UseCanonicalPhysicalPort Off
+EOF
+
 exec apache2-foreground
+

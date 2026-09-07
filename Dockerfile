@@ -22,7 +22,8 @@ COPY . /var/www/html/
 # Ensure uploads directory exists and is writable
 RUN mkdir -p /var/www/html/uploads && \
     chown -R www-data:www-data /var/www/html/uploads && \
-    chmod -R 775 /var/www/html/uploads
+    chmod -R 775 /var/www/html/uploads && \
+    ln -s /var/www/html /var/www/html/ARIWEB
 
 # Ensure Unix LF line endings and executable permission on start script
 RUN sed -i 's/\r$//' /var/www/html/start.sh && \
