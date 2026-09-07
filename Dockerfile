@@ -1,5 +1,9 @@
 FROM php:8.2-apache
 
+# Disable conflicting MPMs and force mpm_prefork
+RUN a2dismod mpm_event mpm_worker 2>/dev/null || true \
+    && a2enmod mpm_prefork
+
 # Install MySQL extensions
 RUN docker-php-ext-install pdo pdo_mysql mysqli
 
@@ -20,8 +24,9 @@ RUN mkdir -p /var/www/html/uploads && \
     chown -R www-data:www-data /var/www/html/uploads && \
     chmod -R 775 /var/www/html/uploads
 
-# Make start script executable
-RUN chmod +x /var/www/html/start.sh
+# Ensure Unix LF line endings and executable permission on start script
+RUN sed -i 's/\r$//' /var/www/html/start.sh && \
+    chmod +x /var/www/html/start.sh
 
 EXPOSE 80
 
