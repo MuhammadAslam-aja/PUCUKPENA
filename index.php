@@ -168,8 +168,8 @@ if ($ogArticle) {
     }
 
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html{scroll-behavior:smooth}
-    body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--text-main);background:var(--bg-body);line-height:1.6;overflow-x:hidden;transition:var(--tr)}
+    html{scroll-behavior:smooth;background-color:#011510}
+    body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--text-main);background:var(--bg-body);line-height:1.6;overflow-x:hidden;min-height:100vh;margin:0;padding:0;transition:var(--tr)}
     h1,h2,h3,h4,h5,h6{font-family:'Lora',Georgia,serif;font-weight:700}
     a{text-decoration:none;color:inherit} img{max-width:100%;display:block} ul{list-style:none}
     .container{width:min(1280px,94%);margin:0 auto}
@@ -941,7 +941,8 @@ if ($ogArticle) {
       .hamburger{display:none}
       .btn-subscribe{display:none}
       .footer {
-        padding: 40px 0 calc(150px + env(safe-area-inset-bottom, 20px)) !important;
+        padding: 40px 0 calc(95px + env(safe-area-inset-bottom, 16px)) !important;
+        margin-bottom: 0 !important;
         box-sizing: border-box !important;
         width: 100% !important;
         overflow: hidden !important;
@@ -960,9 +961,9 @@ if ($ogArticle) {
       .footer-bottom {
         flex-direction: column !important;
         text-align: center !important;
-        gap: 10px !important;
-        padding: 24px 0 20px !important;
-        margin-bottom: 25px !important;
+        gap: 8px !important;
+        padding: 20px 0 10px !important;
+        margin-bottom: 0 !important;
         box-sizing: border-box !important;
         width: 100% !important;
       }
@@ -978,7 +979,7 @@ if ($ogArticle) {
       }
       
       /* Mobile stories and nav indicators */
-      body{padding-bottom:0 !important}
+      body{padding-bottom:0 !important;margin-bottom:0 !important}
       .bottom-nav{display:flex !important}
       
       /* Show sidebar widgets below content on mobile instead of hiding them completely */
@@ -1454,15 +1455,17 @@ if ($ogArticle) {
       font-size: 1.3rem !important;
     }
 
-    /* Bottom padding for fixed bottom navigation */
+    /* Pastikan body dan html tidak memiliki padding atau margin bawah agar tidak muncul celah putih di bawah footer */
     body {
-      padding-bottom: calc(80px + env(safe-area-inset-bottom, 20px)) !important;
+      padding-bottom: 0 !important;
+      margin-bottom: 0 !important;
     }
     .footer {
-      padding-bottom: calc(150px + env(safe-area-inset-bottom, 20px)) !important;
+      padding-bottom: calc(95px + env(safe-area-inset-bottom, 16px)) !important;
+      margin-bottom: 0 !important;
     }
     .back-top {
-      bottom: calc(90px + env(safe-area-inset-bottom, 20px)) !important;
+      bottom: calc(85px + env(safe-area-inset-bottom, 16px)) !important;
       right: 14px !important;
       width: 42px !important;
       height: 42px !important;
