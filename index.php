@@ -522,6 +522,8 @@ try {
       display: block;
       text-decoration: none;
       position: relative;
+      max-width: 100%;
+      box-sizing: border-box;
     }
     .baca-juga-card:hover {
       transform: translateY(-2px);
@@ -544,6 +546,7 @@ try {
       align-items: center;
       gap: 8px;
       margin-bottom: 10px;
+      flex-wrap: wrap;
     }
     .baca-juga-badge {
       display: inline-flex;
@@ -557,6 +560,7 @@ try {
       text-transform: uppercase;
       padding: 3px 10px;
       border-radius: 20px;
+      flex-shrink: 0;
     }
     body.dark-theme .baca-juga-badge {
       background: rgba(16, 185, 129, 0.2);
@@ -569,12 +573,14 @@ try {
     }
     .baca-juga-body {
       display: flex;
-      align-items: center;
-      gap: 16px;
+      align-items: flex-start;
+      gap: 14px;
+      min-width: 0;
     }
     .baca-juga-content {
       flex: 1;
       min-width: 0;
+      overflow: hidden;
     }
     .baca-juga-title {
       font-size: 1.02rem;
@@ -582,11 +588,10 @@ try {
       line-height: 1.42;
       color: var(--text-main);
       margin: 0 0 6px 0;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+      display: block;
       text-decoration: none;
+      word-break: break-word;
+      overflow-wrap: break-word;
       transition: color 0.15s ease;
     }
     .baca-juga-card:hover .baca-juga-title {
@@ -599,10 +604,10 @@ try {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 8px;
       font-size: 0.76rem;
       color: var(--text-muted);
-      margin-top: 6px;
+      margin-top: 8px;
       flex-wrap: wrap;
     }
     .baca-juga-cta {
@@ -613,6 +618,7 @@ try {
       color: var(--green-700);
       font-size: 0.78rem;
       transition: gap 0.2s ease;
+      white-space: nowrap;
     }
     body.dark-theme .baca-juga-cta {
       color: var(--green-400);
@@ -621,23 +627,96 @@ try {
       gap: 8px;
     }
     .baca-juga-thumb {
-      width: 100px;
-      height: 72px;
+      width: 96px;
+      height: 74px;
       border-radius: 8px;
       object-fit: cover;
       flex-shrink: 0;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
-    @media (max-width: 580px) {
-      .baca-juga-thumb {
-        width: 78px;
-        height: 64px;
+    .article-modal-inner {
+      padding: 28px;
+      box-sizing: border-box;
+    }
+    @media (max-width: 768px) {
+      .article-modal-inner {
+        padding: 20px 16px !important;
       }
-      .baca-juga-title {
-        font-size: 0.92rem;
+    }
+    @media (max-width: 640px) {
+      .article-modal-inner {
+        padding: 16px 14px !important;
       }
       .baca-juga-card {
-        padding: 12px 14px;
+        padding: 12px 14px !important;
+        margin: 20px 0 !important;
+        border-radius: 10px !important;
+        border-left-width: 4px !important;
+      }
+      .baca-juga-top {
+        margin-bottom: 8px !important;
+        gap: 6px !important;
+      }
+      .baca-juga-badge {
+        font-size: 0.68rem !important;
+        padding: 2px 8px !important;
+      }
+      .baca-juga-rubrik {
+        font-size: 0.72rem !important;
+      }
+      .baca-juga-body {
+        gap: 12px !important;
+        align-items: flex-start !important;
+      }
+      .baca-juga-thumb {
+        width: 72px !important;
+        height: 72px !important;
+        min-width: 72px !important;
+        max-width: 72px !important;
+        border-radius: 8px !important;
+      }
+      .baca-juga-title {
+        font-size: 0.90rem !important;
+        line-height: 1.38 !important;
+        display: block !important;
+        -webkit-line-clamp: unset !important;
+        overflow: visible !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        margin-bottom: 6px !important;
+      }
+      .baca-juga-footer {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 4px !important;
+        font-size: 0.72rem !important;
+        margin-top: 6px !important;
+      }
+      .baca-juga-cta {
+        font-size: 0.74rem !important;
+      }
+    }
+    @media (max-width: 380px) {
+      .article-modal-inner {
+        padding: 12px 10px !important;
+      }
+      .baca-juga-card {
+        padding: 10px 10px !important;
+        border-left-width: 3px !important;
+      }
+      .baca-juga-thumb {
+        width: 60px !important;
+        height: 60px !important;
+        min-width: 60px !important;
+        max-width: 60px !important;
+        border-radius: 6px !important;
+      }
+      .baca-juga-body {
+        gap: 10px !important;
+      }
+      .baca-juga-title {
+        font-size: 0.85rem !important;
       }
     }
     .modal-close{position:fixed;top:20px;right:20px;width:44px;height:44px;border:none;border-radius:50%;background:var(--bg-card);color:var(--text-main);border:1px solid var(--border-color);font-size:1.2rem;cursor:pointer;z-index:2001;box-shadow:var(--shadow);display:none}
@@ -2372,7 +2451,7 @@ function openArticle(id) {
     </div>
 
     <article class="modal-article" style="transform:none;box-shadow:var(--shadow);border:1px solid var(--border-color);background:var(--bg-card);border-radius:12px;overflow:hidden">
-      <div class="modal-content" style="padding:28px">
+      <div class="modal-content article-modal-inner">
         <span class="${badgeClass(badgeName)}" onclick="event.stopPropagation(); selectCategory('${a.cat || 'berita'}')" style="cursor:pointer;display:inline-block;margin-bottom:12px">${typeName}</span>
         <h1 style="margin:8px 0 14px;font-size:clamp(1.4rem,3vw,2rem);color:var(--text-main);line-height:1.35">${a.title}</h1>
         <div class="article-meta" style="margin-bottom:22px;font-size:0.84rem;color:var(--text-muted)"><span>Oleh <b>${authorName}</b></span> · <span>${pubDate}</span> · <span>${a.views || '1K'} pembaca</span></div>
