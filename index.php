@@ -28,6 +28,7 @@ try {
             'views'   => $r['views'],
             'img'     => $r['img'],
             'tags'    => $tags,
+            'related_article_id' => !empty($r['related_article_id']) ? (int)$r['related_article_id'] : null,
         ];
     }
 
@@ -42,10 +43,15 @@ try {
     $breakingRows = $db->query("SELECT text FROM breaking_news WHERE active=1 ORDER BY sort_order ASC, id DESC")->fetchAll(PDO::FETCH_ASSOC);
     $breakingData = array_column($breakingRows, 'text');
 
+    // 4. Ambil pengaturan website, footer, sosmed, & modal info
+    $settingsRows = $db->query("SELECT setting_key, setting_value FROM site_settings")->fetchAll(PDO::FETCH_KEY_PAIR);
+    $siteSettings = $settingsRows ?: [];
+
 } catch (Exception $e) {
     $articlesData = [];
     $adsData = [];
     $breakingData = [];
+    $siteSettings = [];
 }
 
 // Deteksi artikel untuk Open Graph metadata (WhatsApp, Telegram, Facebook, Twitter preview)
@@ -805,20 +811,20 @@ if ($ogArticle) {
     .bottom-nav {
       display: none;
       position: fixed;
-      bottom: 20px;
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px));
       left: 0 !important;
       right: 0 !important;
       margin: 0 auto !important;
-      width: 82% !important;
-      max-width: 340px !important;
+      width: 90% !important;
+      max-width: 360px !important;
       background: var(--bg-card);
       border: 1px solid var(--border-color);
-      border-radius: 20px;
+      border-radius: 24px;
       z-index: 1001;
       justify-content: space-around;
       align-items: center;
       padding: 8px 12px 6px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
       box-sizing: border-box;
     }
     .bottom-nav-item{display:flex;flex-direction:column;align-items:center;color:var(--gray-400);font-size:.65rem;font-weight:600;cursor:pointer;transition:var(--tr);position:relative;flex:1;text-align:center;text-decoration:none}
@@ -935,19 +941,30 @@ if ($ogArticle) {
       .hamburger{display:none}
       .btn-subscribe{display:none}
       .footer {
-        padding: 40px 0 130px !important;
+        padding: 40px 0 calc(150px + env(safe-area-inset-bottom, 20px)) !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        overflow: hidden !important;
       }
       .footer-grid {
         grid-template-columns: 1fr 1fr !important;
         gap: 24px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
       }
       .footer-brand {
         grid-column: 1 / -1 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
       }
       .footer-bottom {
         flex-direction: column !important;
         text-align: center !important;
-        gap: 8px !important;
+        gap: 10px !important;
+        padding: 24px 0 20px !important;
+        margin-bottom: 25px !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
       }
       @media (max-width: 480px) {
         .footer-grid {
@@ -1439,16 +1456,17 @@ if ($ogArticle) {
 
     /* Bottom padding for fixed bottom navigation */
     body {
-      padding-bottom: 72px !important;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom, 20px)) !important;
     }
     .footer {
-      padding-bottom: 90px !important;
+      padding-bottom: calc(150px + env(safe-area-inset-bottom, 20px)) !important;
     }
     .back-top {
-      bottom: 85px !important;
+      bottom: calc(90px + env(safe-area-inset-bottom, 20px)) !important;
       right: 14px !important;
       width: 42px !important;
       height: 42px !important;
+      z-index: 1002 !important;
     }
   }
 
@@ -1696,14 +1714,14 @@ if ($ogArticle) {
               <img src="img/PUCUK%20PENA.png" alt="Pucuk Pena Logo" class="logo-img">
             </a>
           </div>
-          <p style="font-size:.86rem;line-height:1.75;margin-bottom:16px;color:rgba(255,255,255,0.8)">Pucuk Pena menghadirkan jurnalisme independen, berita faktual, opini kritis, dan artikel mendalam untuk masyarakat Indonesia yang cerdas dan kritis.</p>
+          <p id="footerAboutDesc" style="font-size:.86rem;line-height:1.75;margin-bottom:16px;color:rgba(255,255,255,0.8)"><?= htmlspecialchars($siteSettings['about_footer'] ?? 'Pucuk Pena menghadirkan jurnalisme independen, berita faktual, opini kritis, dan artikel mendalam untuk masyarakat Indonesia yang cerdas dan kritis.') ?></p>
           
-          <div class="social">
-            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" title="Facebook"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>
-            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" title="Instagram"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a>
-            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" title="Twitter/X"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path></svg></a>
-            <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" title="YouTube"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.41 19c1.71.46 8.59.46 8.59.46s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg></a>
-            <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" title="TikTok"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path></svg></a>
+          <div class="social" id="footerSocial">
+            <a href="<?= htmlspecialchars($siteSettings['social_facebook'] ?? 'https://facebook.com') ?>" target="_blank" rel="noopener noreferrer" title="Facebook"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>
+            <a href="<?= htmlspecialchars($siteSettings['social_instagram'] ?? 'https://instagram.com') ?>" target="_blank" rel="noopener noreferrer" title="Instagram"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a>
+            <a href="<?= htmlspecialchars($siteSettings['social_twitter'] ?? 'https://twitter.com') ?>" target="_blank" rel="noopener noreferrer" title="Twitter/X"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path></svg></a>
+            <a href="<?= htmlspecialchars($siteSettings['social_youtube'] ?? 'https://youtube.com') ?>" target="_blank" rel="noopener noreferrer" title="YouTube"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.41 19c1.71.46 8.59.46 8.59.46s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg></a>
+            <a href="<?= htmlspecialchars($siteSettings['social_tiktok'] ?? 'https://tiktok.com') ?>" target="_blank" rel="noopener noreferrer" title="TikTok"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path></svg></a>
           </div>
         </div>
         <div><h4>Kategori Utama</h4><ul class="footer-links"><li><a href="#" onclick="selectCategory('berita'); return false">Berita Utama</a></li><li><a href="#" onclick="selectCategory('essay'); return false">Essay</a></li><li><a href="#" onclick="selectCategory('opini'); return false">Opini</a></li><li><a href="#" onclick="selectCategory('pendidikan'); return false">Pendidikan</a></li></ul></div>
@@ -1711,8 +1729,8 @@ if ($ogArticle) {
         <div><h4>Bantuan & Kontak</h4><ul class="footer-links"><li><a href="#" onclick="openInfoModal('about'); return false">Tentang Kami</a></li><li><a href="#" onclick="openInfoModal('redaksi'); return false">Susunan Redaksi</a></li><li><a href="#" onclick="openInfoModal('kontak'); return false">Kontak Kami</a></li><li><a href="#" onclick="openInfoModal('syarat'); return false">Syarat & Ketentuan</a></li><li><a href="#" onclick="openInfoModal('privasi'); return false">Kebijakan Privasi</a></li></ul></div>
       </div>
       <div class="footer-bottom">
-        <span>&copy; <?= date('Y') ?> Pucuk Pena Media Group. Hak Cipta Dilindungi Undang-Undang.</span>
-        <span>Dibuat dengan 💚 untuk Jurnalisme Indonesia</span>
+        <span id="footerCopyrightText">&copy; <?= date('Y') ?> <?= htmlspecialchars($siteSettings['footer_copyright'] ?? 'Pucuk Pena Media Group. Hak Cipta Dilindungi Undang-Undang.') ?></span>
+        <span id="footerSubtext"><?= htmlspecialchars($siteSettings['footer_subtext'] ?? 'Dibuat dengan 💚 untuk Jurnalisme Indonesia') ?></span>
       </div>
     </div>
   </footer>
@@ -1832,6 +1850,7 @@ function genImg(id, colors, icon, label) {
   let ARTICLES = <?= json_encode($articlesData, JSON_UNESCAPED_UNICODE) ?> || [];
   let ADS = <?= json_encode($adsData, JSON_UNESCAPED_UNICODE) ?> || {};
   let BREAKING_TEXTS = <?= json_encode($breakingData, JSON_UNESCAPED_UNICODE) ?> || [];
+  let SITE_SETTINGS = <?= json_encode($siteSettings, JSON_UNESCAPED_UNICODE) ?> || {};
 
   function getArticleImg(img) {
     if (img && typeof img === 'string') {
@@ -1940,6 +1959,24 @@ function genImg(id, colors, icon, label) {
         `
       }
     };
+
+    const titles = {
+      'about': 'Tentang Kami',
+      'redaksi': 'Susunan Redaksi',
+      'kontak': 'Kontak Kami',
+      'syarat': 'Syarat & Ketentuan',
+      'privasi': 'Kebijakan Privasi'
+    };
+
+    const settingKey = type + '_modal';
+    if (SITE_SETTINGS && SITE_SETTINGS[settingKey] && SITE_SETTINGS[settingKey].trim() !== '') {
+      titleEl.textContent = titles[type] || 'Informasi';
+      bodyEl.innerHTML = SITE_SETTINGS[settingKey].split('\n\n').map(p => {
+        return `<p style="margin-bottom:14px;line-height:1.75;font-size:0.9rem">${escapeHtml(p).replace(/\n/g, '<br>')}</p>`;
+      }).join('');
+      overlay.classList.add('active');
+      return;
+    }
 
     const item = contentMap[type] || contentMap['about'];
     titleEl.textContent = item.title;
@@ -2607,13 +2644,19 @@ function openArticle(id) {
   // Ambil artikel terkait yang betul-betul ada di database dan bukan artikel saat ini
   const otherArticles = ARTICLES.filter(x => Number(x.id) !== Number(a.id) && x.type !== 'video' && x.type !== 'foto');
   
-  // Prioritaskan artikel dengan kategori atau rubrik yang sama
-  const sameCategory = otherArticles.filter(x => x.cat === a.cat || x.type === a.type);
+  // Prioritaskan artikel rekomendasi editorial yang dipilih Admin (related_article_id)
   let related = null;
-  if (sameCategory.length > 0) {
-    related = sameCategory[Number(a.id) % sameCategory.length];
-  } else if (otherArticles.length > 0) {
-    related = otherArticles[Number(a.id) % otherArticles.length];
+  if (a.related_article_id) {
+    related = otherArticles.find(x => Number(x.id) === Number(a.related_article_id)) || null;
+  }
+  // Jika tidak diset manual oleh admin, fallback otomatis sesuai kategori atau rubrik
+  if (!related) {
+    const sameCategory = otherArticles.filter(x => x.cat === a.cat || x.type === a.type);
+    if (sameCategory.length > 0) {
+      related = sameCategory[Number(a.id) % sameCategory.length];
+    } else if (otherArticles.length > 0) {
+      related = otherArticles[Number(a.id) % otherArticles.length];
+    }
   }
 
   const safeTitle = related ? related.title.replace(/"/g, '&quot;') : '';

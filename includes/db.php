@@ -95,8 +95,42 @@ function getDB(): PDO {
             $pdo->exec("UPDATE `ads` SET `image` = 'img/ai_startup.png' WHERE `slot` = 'native1' AND (`image` IS NULL OR `image` = '')");
             $pdo->exec("UPDATE `ads` SET `image` = 'img/timnas_football.png' WHERE `slot` = 'native2' AND (`image` IS NULL OR `image` = '')");
         }
-        // Migrasi Hikmat -> Hikmah jika masih ada artikel dengan type 'Hikmat'
-        $pdo->exec("UPDATE `articles` SET `type` = 'Hikmah' WHERE `type` = 'Hikmat'");
+        // Kolom related_article_id pada tabel articles
+        $colRelCheck = $pdo->query("SHOW COLUMNS FROM `articles` LIKE 'related_article_id'")->rowCount();
+        if ($colRelCheck === 0) {
+            $pdo->exec("ALTER TABLE `articles` ADD COLUMN `related_article_id` int DEFAULT NULL AFTER `tags`");
+        }
+
+        // Tabel site_settings
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `site_settings` (
+            `setting_key` varchar(64) NOT NULL,
+            `setting_value` text,
+            PRIMARY KEY (`setting_key`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        // Seed default site settings jika belum ada
+        $settingsDefaults = [
+            'site_name'         => 'Pucuk Pena',
+            'site_tagline'      => 'Menggores Makna, Mengabarkan Kebenaran',
+            'about_footer'      => 'Pucuk Pena menghadirkan jurnalisme independen, berita faktual, opini kritis, dan artikel mendalam untuk masyarakat Indonesia yang cerdas dan kritis.',
+            'about_modal'       => "Pucuk Pena adalah media digital independen yang berdedikasi menyajikan berita akurat, investigasi mendalam, opini bernas, dan analisis kritis di bidang politik, hukum, ekonomi, budaya, dan pendidikan.\n\nDidirikan dengan semangat menjaga marwah jurnalisme publik, Pucuk Pena berkomitmen menjadi ruang dialektika yang mencerahkan, berimbang, dan berpegang teguh pada Kode Etik Jurnalistik.",
+            'editorial_modal'   => "Dewan Penasehat: Prof. Dr. Hendra Gunawan\nPemimpin Redaksi: Muhammad Aslam\nRedaktur Pelaksana: Budi Santoso, S.Sos.\nRedaktur Opini & Budaya: Siti Rahmawati, M.Hum.\nDesk Investigasi: Denny Ardiansyah\nFotografer & Multimedia: Reza Pratama\nPengembang Web & Teknologi: Ari Web Dev Studio",
+            'contact_modal'     => "Alamat Redaksi:\nGedung Pers Nusantara Lt. 4, Jl. Merdeka No. 45, Jakarta Pusat, 10110\n\nEmail Redaksi: redaksi@pucukpena.com\nEmail Iklan & Kerjasama: bisnis@pucukpena.com\nWhatsApp Redaksi: +62 812-3456-7890\nLayanan Pembaca: info@pucukpena.com",
+            'terms_modal'       => "1. Pengguna wajib mematuhi seluruh peraturan perundang-undangan Republik Indonesia dalam memanfaatkan platform Pucuk Pena.\n2. Seluruh konten artikel, visual, dan merek dagang dilindungi oleh hak cipta.\n3. Dilarang menduplikasi, memublikasikan ulang tanpa izin tertulis dari Redaksi Pucuk Pena.\n4. Komentar pembaca merupakan tanggung jawab penuh masing-masing pengirim dan harus bebas dari unsur SARA, ujaran kebencian, dan hoaks.",
+            'privacy_modal'     => "1. Pucuk Pena menghargai privasi setiap pembaca dan pengguna situs kami.\n2. Data pembaca seperti nama dan alamat email yang dikirimkan melalui form komentar atau kontak hanya digunakan untuk keperluan verifikasi dan korespondensi redaksional.\n3. Kami tidak menjual atau membagikan data pribadi pengunjung kepada pihak ketiga mana pun tanpa persetujuan.",
+            'social_facebook'   => 'https://facebook.com',
+            'social_instagram'  => 'https://instagram.com',
+            'social_twitter'    => 'https://twitter.com',
+            'social_youtube'    => 'https://youtube.com',
+            'social_tiktok'     => 'https://tiktok.com',
+            'footer_copyright'  => 'Pucuk Pena Media Group. Hak Cipta Dilindungi Undang-Undang.',
+            'footer_subtext'    => 'Dibuat dengan 💚 untuk Jurnalisme Indonesia'
+        ];
+
+        $stmtSet = $pdo->prepare("INSERT IGNORE INTO `site_settings` (`setting_key`, `setting_value`) VALUES (?, ?)");
+        foreach ($settingsDefaults as $k => $v) {
+            $stmtSet->execute([$k, $v]);
+        }
     } catch (Exception $e) {
         // Lanjutkan jika migrasi telah terpasang
     }

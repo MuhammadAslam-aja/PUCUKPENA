@@ -32,6 +32,7 @@ if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $date    = trim($_POST['date_display'] ?? date('d F Y'));
     $views   = trim($_POST['views'] ?? '0');
     $status  = ($_POST['status'] ?? 'draft') === 'published' ? 'published' : 'draft';
+    $relatedArticleId = !empty($_POST['related_article_id']) ? (int)$_POST['related_article_id'] : null;
 
     // ── Handle gambar upload ──
     $img = trim($_POST['img_current'] ?? '');
@@ -70,12 +71,12 @@ if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $action = $id > 0 ? 'edit' : 'new';
     } elseif (empty($error)) {
         if ($id > 0) {
-            $stmt = $db->prepare("UPDATE articles SET type=?,cat=?,badge=?,title=?,excerpt=?,content=?,author=?,date_display=?,views=?,img=?,tags=?,status=?,updated_at=NOW() WHERE id=?");
-            $stmt->execute([$type,$cat,$badge,$title,$excerpt,$content,$author,$date,$views,$img,$tagsJson,$status,$id]);
+            $stmt = $db->prepare("UPDATE articles SET type=?,cat=?,badge=?,title=?,excerpt=?,content=?,author=?,date_display=?,views=?,img=?,tags=?,related_article_id=?,status=?,updated_at=NOW() WHERE id=?");
+            $stmt->execute([$type,$cat,$badge,$title,$excerpt,$content,$author,$date,$views,$img,$tagsJson,$relatedArticleId,$status,$id]);
             $message = 'Artikel berhasil diperbarui.';
         } else {
-            $stmt = $db->prepare("INSERT INTO articles (type,cat,badge,title,excerpt,content,author,date_display,views,img,tags,status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
-            $stmt->execute([$type,$cat,$badge,$title,$excerpt,$content,$author,$date,$views,$img,$tagsJson,$status]);
+            $stmt = $db->prepare("INSERT INTO articles (type,cat,badge,title,excerpt,content,author,date_display,views,img,tags,related_article_id,status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            $stmt->execute([$type,$cat,$badge,$title,$excerpt,$content,$author,$date,$views,$img,$tagsJson,$relatedArticleId,$status]);
             $id = (int)$db->lastInsertId();
             $message = 'Artikel berhasil ditambahkan!';
         }
@@ -170,6 +171,10 @@ function badgeCls($b) {
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
       Breaking News
     </a>
+    <a href="settings.php">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Pengaturan
+    </a>
   </nav>
   <div class="sidebar-footer">
     <div><?= htmlspecialchars($_SESSION['admin_user']) ?></div>
@@ -223,7 +228,7 @@ function badgeCls($b) {
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>#</th><th>Judul</th><th>Tipe</th><th>Kategori</th><th>Penulis</th><th>Tanggal</th><th>Status</th><th>Aksi</th></tr>
+            <tr><th>#</th><th>Judul</th><th>Tipe</th><th>Kategori</th><th>Baca Juga</th><th>Penulis</th><th>Tanggal</th><th>Status</th><th>Aksi</th></tr>
           </thead>
           <tbody>
             <?php foreach ($articles as $a): ?>
@@ -236,6 +241,13 @@ function badgeCls($b) {
               </td>
               <td><span class="badge badge-<?= badgeCls($a['type']) ?>"><?= htmlspecialchars($a['type']) ?></span></td>
               <td><span style="font-size:0.78rem;color:var(--gray-600)"><?= htmlspecialchars($a['cat']) ?></span></td>
+              <td>
+                <?php if (!empty($a['related_article_id'])): ?>
+                  <span class="badge" style="background:#e0f2fe;color:#0369a1;font-size:0.74rem" title="Artikel rekomendasi #<?= $a['related_article_id'] ?>">#<?= $a['related_article_id'] ?> Terpilih</span>
+                <?php else: ?>
+                  <span class="badge" style="background:#f1f5f9;color:#64748b;font-size:0.74rem">Otomatis</span>
+                <?php endif; ?>
+              </td>
               <td style="font-size:0.82rem"><?= htmlspecialchars($a['author']) ?></td>
               <td style="font-size:0.8rem;white-space:nowrap"><?= htmlspecialchars($a['date_display']) ?></td>
               <td><span class="badge badge-<?= $a['status'] ?>"><?= $a['status'] ?></span></td>
@@ -246,7 +258,7 @@ function badgeCls($b) {
             </tr>
             <?php endforeach; ?>
             <?php if (empty($articles)): ?>
-            <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--gray-400)">
+            <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--gray-400)">
               <?= $search ? 'Tidak ditemukan hasil pencarian.' : 'Belum ada artikel. <a href="articles.php?action=new">Tambah sekarang</a>' ?>
             </td></tr>
             <?php endif; ?>
@@ -271,9 +283,11 @@ function badgeCls($b) {
     $art = $article ?? [
       'id'=>0,'type'=>'berita','cat'=>'nasional','badge'=>'berita',
       'title'=>'','excerpt'=>'','content'=>'','author'=>'',
-      'date_display'=>date('d F Y'),'views'=>'0','img'=>'','tags'=>'[]','status'=>'draft'
+      'date_display'=>date('d F Y'),'views'=>'0','img'=>'','tags'=>'[]',
+      'related_article_id'=>null,'status'=>'draft'
     ];
     $tagsStr = implode(', ', json_decode($art['tags'] ?? '[]', true) ?? []);
+    $allOtherArticles = $db->query("SELECT id, title, type, cat FROM articles ORDER BY id DESC")->fetchAll();
     ?>
     <form method="POST" enctype="multipart/form-data" id="articleForm">
       <input type="hidden" name="action" value="save">
@@ -405,6 +419,26 @@ function badgeCls($b) {
                     <option value="<?= $b ?>" <?= ($art['badge']??'')===$b?'selected':'' ?>><?= ucfirst($b) ?></option>
                   <?php endforeach; ?>
                 </select>
+              </div>
+
+              <div class="form-group" style="background:#f0fdf4;padding:12px;border-radius:8px;border:1px solid #bbf7d0">
+                <label style="font-weight:700;color:var(--green-800);display:flex;align-items:center;gap:6px">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                  Rekomendasi "Baca Juga"
+                </label>
+                <select name="related_article_id" class="form-control" style="font-size:0.82rem;margin-top:6px">
+                  <option value="">⚡ Otomatis (Sesuai Kategori / Rubrik)</option>
+                  <?php foreach ($allOtherArticles as $oa): 
+                    if (!empty($art['id']) && (int)$oa['id'] === (int)$art['id']) continue;
+                  ?>
+                    <option value="<?= $oa['id'] ?>" <?= ((int)($art['related_article_id'] ?? 0) === (int)$oa['id']) ? 'selected' : '' ?>>
+                      #<?= $oa['id'] ?> — <?= htmlspecialchars(mb_strimwidth($oa['title'], 0, 42, '...')) ?> (<?= htmlspecialchars($oa['type']) ?>)
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+                <small style="color:var(--green-700);font-size:0.72rem;display:block;margin-top:5px;line-height:1.4">
+                  Artikel yang dipilih akan tampil di tengah tulisan sebagai kartu <b>"BACA JUGA"</b>. Jika dibiarkan otomatis, sistem akan merekomendasikan artikel lain dengan topik terkait.
+                </small>
               </div>
 
               <div class="form-group">

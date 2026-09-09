@@ -80,6 +80,7 @@ $slotMeta = [
     <a href="comments.php"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Komentar</a>
     <a href="ads.php" class="active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>Iklan</a>
     <a href="breaking.php"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Breaking News</a>
+    <a href="settings.php"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Pengaturan</a>
   </nav>
   <div class="sidebar-footer">
     <div><?= htmlspecialchars($_SESSION['admin_user']) ?></div>
@@ -179,14 +180,22 @@ $slotMeta = [
 
             <!-- Upload File & URL Alternatif -->
             <div style="flex:1;min-width:260px">
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+                <span style="font-size:0.75rem;color:var(--gray-500);font-weight:600">Pilih Cepat:</span>
+                <button type="button" class="btn btn-sm btn-outline" onclick="selectAdPreset(<?= $ad['id'] ?>, 'img/desa_wisata.png')">Desa Wisata</button>
+                <button type="button" class="btn btn-sm btn-outline" onclick="selectAdPreset(<?= $ad['id'] ?>, 'img/ai_startup.png')">AI Startup</button>
+                <button type="button" class="btn btn-sm btn-outline" onclick="selectAdPreset(<?= $ad['id'] ?>, 'img/timnas_football.png')">Timnas</button>
+                <button type="button" class="btn btn-sm btn-outline" style="color:var(--red);border-color:#fca5a5" onclick="clearAdImg(<?= $ad['id'] ?>)">Kosongkan Gambar</button>
+              </div>
+
               <div class="form-group" style="margin-bottom:12px">
-                <label style="font-size:0.82rem;font-weight:600">Pilih File Gambar dari Komputer/HP:</label>
+                <label style="font-size:0.82rem;font-weight:600">Upload File Banner Baru:</label>
                 <input type="file" name="ad_file[<?= $ad['id'] ?>]" class="form-control" accept="image/*" onchange="previewAdFile(this, <?= $ad['id'] ?>)">
-                <small style="color:var(--gray-400);font-size:0.75rem">Mendukung file JPG, PNG, WebP, GIF, SVG.</small>
+                <small style="color:var(--gray-400);font-size:0.75rem">Mendukung JPG, PNG, WebP, GIF, SVG.</small>
               </div>
               <div class="form-group" style="margin-bottom:0">
-                <label style="font-size:0.82rem;font-weight:600">Atau Masukkan Tautan / Path Gambar:</label>
-                <input type="text" name="image_url[<?= $ad['id'] ?>]" class="form-control"
+                <label style="font-size:0.82rem;font-weight:600">Atau Masukkan URL / Path Gambar:</label>
+                <input type="text" name="image_url[<?= $ad['id'] ?>]" id="ad_url_input_<?= $ad['id'] ?>" class="form-control"
                        value="<?= htmlspecialchars($ad['image'] ?? '') ?>"
                        placeholder="uploads/nama_file.jpg atau https://..."
                        oninput="previewAdUrl(this.value, <?= $ad['id'] ?>)">
@@ -221,6 +230,25 @@ $slotMeta = [
 </div>
 
 <script>
+function selectAdPreset(id, path) {
+  const input = document.getElementById('ad_url_input_' + id);
+  if (input) {
+    input.value = path;
+    previewAdUrl(path, id);
+  }
+}
+
+function clearAdImg(id) {
+  const input = document.getElementById('ad_url_input_' + id);
+  const curr = document.querySelector(`input[name="image_current[${id}]"]`);
+  if (input) input.value = '';
+  if (curr) curr.value = '';
+  const wrap = document.getElementById('preview_wrap_' + id);
+  if (wrap) {
+    wrap.innerHTML = `<div id="preview_placeholder_${id}" style="padding:30px 16px;color:var(--gray-400);font-size:0.85rem">🖼️ Belum ada gambar banner</div>`;
+  }
+}
+
 function previewAdFile(input, id) {
   if (input.files && input.files[0]) {
     const reader = new FileReader();

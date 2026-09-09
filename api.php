@@ -51,6 +51,7 @@ switch ($action) {
                 'views'   => $r['views'],
                 'img'     => $r['img'],
                 'tags'    => $tags,
+                'related_article_id' => !empty($r['related_article_id']) ? (int)$r['related_article_id'] : null,
             ];
         }
         echo json_encode($out, JSON_UNESCAPED_UNICODE);
@@ -306,6 +307,17 @@ switch ($action) {
         }
         header('Location: ../admin/breaking.php?saved=1');
         exit;
+
+    // ── GET SITE SETTINGS ─────────────────────────────────────────────────────
+    case 'settings':
+        $stmt = getDB()->query("SELECT setting_key, setting_value FROM site_settings");
+        $rows = $stmt->fetchAll();
+        $settings = [];
+        foreach ($rows as $r) {
+            $settings[$r['setting_key']] = $r['setting_value'];
+        }
+        echo json_encode($settings, JSON_UNESCAPED_UNICODE);
+        break;
 
     default:
         http_response_code(404);
