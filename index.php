@@ -47,14 +47,81 @@ try {
     $adsData = [];
     $breakingData = [];
 }
+
+// Deteksi artikel untuk Open Graph metadata (WhatsApp, Telegram, Facebook, Twitter preview)
+$requestedArticleId = (int)($_GET['id'] ?? ($_GET['article'] ?? 0));
+$ogArticle = null;
+if ($requestedArticleId > 0) {
+    foreach ($articlesData as $art) {
+        if ($art['id'] === $requestedArticleId) {
+            $ogArticle = $art;
+            break;
+        }
+    }
+    if (!$ogArticle && isset($db)) {
+        try {
+            $stmtOg = $db->prepare("SELECT * FROM articles WHERE id = ? LIMIT 1");
+            $stmtOg->execute([$requestedArticleId]);
+            $ogRow = $stmtOg->fetch(PDO::FETCH_ASSOC);
+            if ($ogRow) {
+                $ogArticle = [
+                    'id'      => (int)$ogRow['id'],
+                    'title'   => $ogRow['title'],
+                    'excerpt' => $ogRow['excerpt'],
+                    'content' => $ogRow['content'],
+                    'img'     => $ogRow['img'],
+                    'author'  => $ogRow['author'],
+                ];
+            }
+        } catch (Exception $e) {}
+    }
+}
+
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') ? 'https://' : 'http://';
+$host = $_SERVER['HTTP_HOST'] ?? 'pucukpena.up.railway.app';
+$baseUrl = rtrim($protocol . $host, '/');
+
+if ($ogArticle) {
+    $metaTitle = htmlspecialchars($ogArticle['title']) . ' — Pucuk Pena';
+    $rawExcerpt = !empty($ogArticle['excerpt']) ? $ogArticle['excerpt'] : mb_substr(strip_tags($ogArticle['content']), 0, 160);
+    $metaDesc  = htmlspecialchars(trim(preg_replace('/\s+/', ' ', $rawExcerpt)));
+    $rawImg    = !empty($ogArticle['img']) ? $ogArticle['img'] : 'img/desa_wisata.png';
+    $metaImg   = (str_starts_with($rawImg, 'http://') || str_starts_with($rawImg, 'https://')) ? $rawImg : $baseUrl . '/' . ltrim($rawImg, '/');
+    $metaUrl   = $baseUrl . '/?id=' . $ogArticle['id'];
+    $metaType  = 'article';
+} else {
+    $metaTitle = 'Pucuk Pena | Berita Terkini, Opini, Essay & Artikel Terpercaya';
+    $metaDesc  = 'Pucuk Pena menghadirkan jurnalisme independen, berita faktual, opini kritis, dan artikel mendalam untuk masyarakat Indonesia.';
+    $metaImg   = $baseUrl . '/img/PUCUK%20PENA.png';
+    $metaUrl   = $baseUrl . '/';
+    $metaType  = 'website';
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Pucuk Pena - Portal Berita Online Terpercaya Indonesia">
-  <title>Pucuk Pena | Berita Terkini, Opini, Essay & Artikel</title>
+  <meta name="description" content="<?= $metaDesc ?>">
+  <title><?= $metaTitle ?></title>
+
+  <!-- Open Graph / WhatsApp / Facebook / Telegram Link Preview -->
+  <meta property="og:site_name" content="Pucuk Pena">
+  <meta property="og:type" content="<?= $metaType ?>">
+  <meta property="og:url" content="<?= $metaUrl ?>">
+  <meta property="og:title" content="<?= $metaTitle ?>">
+  <meta property="og:description" content="<?= $metaDesc ?>">
+  <meta property="og:image" content="<?= $metaImg ?>">
+  <meta property="og:image:secure_url" content="<?= $metaImg ?>">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter / X Cards -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="<?= $metaUrl ?>">
+  <meta name="twitter:title" content="<?= $metaTitle ?>">
+  <meta name="twitter:description" content="<?= $metaDesc ?>">
+  <meta name="twitter:image" content="<?= $metaImg ?>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
@@ -867,7 +934,27 @@ try {
       }
       .hamburger{display:none}
       .btn-subscribe{display:none}
-      .footer-grid{grid-template-columns:1fr}
+      .footer {
+        padding: 40px 0 130px !important;
+      }
+      .footer-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 24px !important;
+      }
+      .footer-brand {
+        grid-column: 1 / -1 !important;
+      }
+      .footer-bottom {
+        flex-direction: column !important;
+        text-align: center !important;
+        gap: 8px !important;
+      }
+      @media (max-width: 480px) {
+        .footer-grid {
+          grid-template-columns: 1fr !important;
+          gap: 22px !important;
+        }
+      }
       .ad-leaderboard{height:auto !important; min-height: 60px; padding: 12px; font-size: 0.8rem;}
       .ad-sticky-bottom {
         display: none !important;
@@ -875,7 +962,6 @@ try {
       
       /* Mobile stories and nav indicators */
       body{padding-bottom:0 !important}
-      .footer{padding-bottom:110px !important}
       .bottom-nav{display:flex !important}
       
       /* Show sidebar widgets below content on mobile instead of hiding them completely */
@@ -1604,32 +1690,47 @@ try {
   <footer class="footer">
     <div class="container">
       <div class="footer-grid">
-        <div>
+        <div class="footer-brand">
           <div class="logo" style="margin-bottom:12px">
             <a href="#" onclick="selectCategory('all'); return false">
               <img src="img/PUCUK%20PENA.png" alt="Pucuk Pena Logo" class="logo-img">
             </a>
           </div>
-          <p style="font-size:.84rem;line-height:1.7;margin-bottom:16px">Pucuk Pena menghadirkan jurnalisme independen, berita faktual, opini kritis, dan artikel mendalam untuk masyarakat Indonesia yang cerdas dan kritis.</p>
+          <p style="font-size:.86rem;line-height:1.75;margin-bottom:16px;color:rgba(255,255,255,0.8)">Pucuk Pena menghadirkan jurnalisme independen, berita faktual, opini kritis, dan artikel mendalam untuk masyarakat Indonesia yang cerdas dan kritis.</p>
           
           <div class="social">
-            <a href="#" title="Facebook"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>
-            <a href="#" title="Instagram"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a>
-            <a href="#" title="Twitter/X"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path></svg></a>
-            <a href="#" title="YouTube"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.41 19c1.71.46 8.59.46 8.59.46s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg></a>
-            <a href="#" title="TikTok"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path></svg></a>
+            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" title="Facebook"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" title="Instagram"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a>
+            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" title="Twitter/X"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path></svg></a>
+            <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" title="YouTube"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.41 19c1.71.46 8.59.46 8.59.46s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg></a>
+            <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" title="TikTok"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path></svg></a>
           </div>
         </div>
         <div><h4>Kategori Utama</h4><ul class="footer-links"><li><a href="#" onclick="selectCategory('berita'); return false">Berita Utama</a></li><li><a href="#" onclick="selectCategory('essay'); return false">Essay</a></li><li><a href="#" onclick="selectCategory('opini'); return false">Opini</a></li><li><a href="#" onclick="selectCategory('pendidikan'); return false">Pendidikan</a></li></ul></div>
         <div><h4>Rubrik Lainnya</h4><ul class="footer-links"><li><a href="#" onclick="selectCategory('olahraga'); return false">Olahraga</a></li><li><a href="#" onclick="selectCategory('ekonomi'); return false">Ekonomi</a></li><li><a href="#" onclick="selectCategory('hikmah'); return false">Hikmah</a></li><li><a href="#" onclick="selectCategory('foto'); return false">Foto</a></li><li><a href="#" onclick="selectCategory('bookmark'); return false">Berita Disimpan</a></li></ul></div>
-        <div><h4>Bantuan & Kontak</h4><ul class="footer-links"><li><a href="#">Tentang Kami</a></li><li><a href="#">Susunan Redaksi</a></li><li><a href="#">Kontak Kami</a></li><li><a href="#">Syarat & Ketentuan</a></li><li><a href="#">Kebijakan Privasi</a></li></ul></div>
+        <div><h4>Bantuan & Kontak</h4><ul class="footer-links"><li><a href="#" onclick="openInfoModal('about'); return false">Tentang Kami</a></li><li><a href="#" onclick="openInfoModal('redaksi'); return false">Susunan Redaksi</a></li><li><a href="#" onclick="openInfoModal('kontak'); return false">Kontak Kami</a></li><li><a href="#" onclick="openInfoModal('syarat'); return false">Syarat & Ketentuan</a></li><li><a href="#" onclick="openInfoModal('privasi'); return false">Kebijakan Privasi</a></li></ul></div>
       </div>
       <div class="footer-bottom">
-        <span>&copy; 2025 Pucuk Pena Media Group. Hak Cipta Dilindungi Undang-Undang.</span>
+        <span>&copy; <?= date('Y') ?> Pucuk Pena Media Group. Hak Cipta Dilindungi Undang-Undang.</span>
         <span>Dibuat dengan 💚 untuk Jurnalisme Indonesia</span>
       </div>
     </div>
   </footer>
+
+  <!-- Info Modal Dialog (Tentang Kami, Susunan Redaksi, Kontak, dll.) -->
+  <div id="infoModalOverlay" class="modal-overlay" onclick="closeInfoModal(event)" style="z-index:2500">
+    <div class="modal-article" style="max-width:580px;margin:30px auto;border-radius:12px;overflow:hidden;box-shadow:var(--shadow-lg)" onclick="event.stopPropagation()">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid var(--border-color);background:var(--bg-card)">
+        <h3 id="infoModalTitle" style="margin:0;color:var(--green-700);font-size:1.1rem">Informasi</h3>
+        <button onclick="closeInfoModal()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text-muted);padding:4px 8px" title="Tutup">✕</button>
+      </div>
+      <div id="infoModalBody" style="padding:24px;line-height:1.75;font-size:0.92rem;color:var(--text-main);max-height:75vh;overflow-y:auto;background:var(--bg-card)">
+      </div>
+      <div style="padding:12px 24px;border-top:1px solid var(--border-color);text-align:right;background:var(--bg-card)">
+        <button onclick="closeInfoModal()" style="padding:7px 18px;background:var(--green-700);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.82rem">Tutup</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Sticky Bottom Ad -->
   <div class="ad-sticky-bottom" id="stickyAd">
@@ -1732,6 +1833,126 @@ function genImg(id, colors, icon, label) {
   let ADS = <?= json_encode($adsData, JSON_UNESCAPED_UNICODE) ?> || {};
   let BREAKING_TEXTS = <?= json_encode($breakingData, JSON_UNESCAPED_UNICODE) ?> || [];
 
+  function getArticleImg(img) {
+    if (img && typeof img === 'string') {
+      const clean = img.trim();
+      if (clean !== '' && clean !== 'null' && clean !== 'undefined') {
+        return clean;
+      }
+    }
+    return 'img/desa_wisata.png';
+  }
+
+  function getShareUrl(id) {
+    return `${window.location.origin}${window.location.pathname}?id=${id}`;
+  }
+
+  function shareArticleWhatsApp(title, id) {
+    const url = getShareUrl(id);
+    const text = `*${title}*\n\nBaca selengkapnya di Pucuk Pena:\n${url}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+  }
+
+  function shareArticleNative(title, id) {
+    const url = getShareUrl(id);
+    if (navigator.share) {
+      navigator.share({
+        title: title + ' — Pucuk Pena',
+        text: title,
+        url: url
+      }).catch(e => {
+        if (e.name !== 'AbortError') copyArticleLink(id);
+      });
+    } else {
+      copyArticleLink(id);
+    }
+  }
+
+  function copyArticleLink(id) {
+    const url = getShareUrl(id);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('Link artikel berhasil disalin!');
+      }).catch(() => {
+        showToast('Gagal menyalin link');
+      });
+    } else {
+      showToast('Link: ' + url);
+    }
+  }
+
+  function openInfoModal(type) {
+    const overlay = document.getElementById('infoModalOverlay');
+    const titleEl = document.getElementById('infoModalTitle');
+    const bodyEl = document.getElementById('infoModalBody');
+    if (!overlay || !titleEl || !bodyEl) return;
+
+    const contentMap = {
+      'about': {
+        title: 'Tentang Kami',
+        body: `
+          <p style="margin-bottom:14px"><strong>Pucuk Pena</strong> adalah media daring independen terdepan yang berdedikasi menyajikan jurnalisme faktual, berintegritas, mendalam, dan mencerdaskan bangsa.</p>
+          <p style="margin-bottom:14px">Dengan mengusung moto <em>"Tajam Mengabarkan, Jernih Mencerahkan"</em>, redaksi kami mengawal fakta melalui investigasi, analisis ekonomi, telaah pendidikan, serta pencerahan hikmah dan opini kritis para pakar.</p>
+          <p>Kami menjunjung Kode Etik Jurnalistik dan senantiasa berpihak pada kebenaran dan kepentingan publik demi literasi Indonesia.</p>
+        `
+      },
+      'redaksi': {
+        title: 'Susunan Redaksi',
+        body: `
+          <div style="display:flex;flex-direction:column;gap:12px;font-size:0.9rem">
+            <div><strong style="color:var(--green-700)">Pemimpin Umum / Penanggung Jawab:</strong><br>Muhammad Aslam</div>
+            <div><strong style="color:var(--green-700)">Pemimpin Redaksi:</strong><br>Ahmad Fauzi, M.I.Kom</div>
+            <div><strong style="color:var(--green-700)">Redaktur Pelaksana:</strong><br>Siti Nurhaliza</div>
+            <div><strong style="color:var(--green-700)">Dewan Redaksi & Editorial:</strong><br>Dr. Hendra Wijaya, Prof. Suryanto, M.Si</div>
+            <div><strong style="color:var(--green-700)">Tim Investigasi & Liputan Khusus:</strong><br>Rian Pratama, Dewi Lestari, Budi Santoso</div>
+            <div><strong style="color:var(--green-700)">Teknologi & Multimedia:</strong><br>Tim IT Pucuk Pena</div>
+            <div><strong style="color:var(--green-700)">Alamat Kantor Redaksi:</strong><br>Gedung Pena Nusantara Lt. 3, Jl. Merdeka No. 45, Jakarta Pusat</div>
+          </div>
+        `
+      },
+      'kontak': {
+        title: 'Kontak Kami',
+        body: `
+          <p style="margin-bottom:14px">Punya informasi berita, pertanyaan, kerjasama iklan, atau pengiriman tulisan opini/essay? Hubungi tim kami:</p>
+          <div style="display:flex;flex-direction:column;gap:12px;font-size:0.9rem">
+            <div>📧 <strong>Email Redaksi:</strong> redaksi@pucukpena.com</div>
+            <div>💼 <strong>Email Bisnis & Iklan:</strong> iklan@pucukpena.com</div>
+            <div>📱 <strong>WhatsApp Redaksi:</strong> +62 812-3456-7890</div>
+            <div>📍 <strong>Alamat:</strong> Gedung Pena Nusantara Lt. 3, Jakarta Pusat</div>
+            <div>🕒 <strong>Jam Operasional:</strong> Senin – Jumat: 08.00 – 18.00 WIB</div>
+          </div>
+        `
+      },
+      'syarat': {
+        title: 'Syarat & Ketentuan',
+        body: `
+          <p style="margin-bottom:12px">1. <strong>Hak Cipta:</strong> Seluruh artikel, narasi, visual foto, dan video yang diterbitkan di Pucuk Pena dilindungi oleh Undang-Undang Hak Cipta.</p>
+          <p style="margin-bottom:12px">2. <strong>Pengutipan:</strong> Pengutipan materi diizinkan maksimal 25% dari total isi dengan mencantumkan sumber jelas dan backlink aktif ke Pucuk Pena.</p>
+          <p style="margin-bottom:12px">3. <strong>Komentar:</strong> Pembaca dilarang menyebarkan ujaran kebencian, fitnah, pornografi, maupun provokasi SARA di kolom komentar.</p>
+        `
+      },
+      'privasi': {
+        title: 'Kebijakan Privasi',
+        body: `
+          <p style="margin-bottom:12px">1. <strong>Perlindungan Data:</strong> Pucuk Pena berkomitmen penuh melindungi privasi pembaca sesuai peraturan perlindungan data pribadi.</p>
+          <p style="margin-bottom:12px">2. <strong>Penggunaan Informasi:</strong> Informasi nama pembaca yang mengirim komentar hanya digunakan untuk atribusi diskusi di situs.</p>
+          <p style="margin-bottom:12px">3. <strong>Keamanan:</strong> Kami tidak pernah menjual, menyewakan, atau menyalahgunakan data pengguna kepada pihak ketiga.</p>
+        `
+      }
+    };
+
+    const item = contentMap[type] || contentMap['about'];
+    titleEl.textContent = item.title;
+    bodyEl.innerHTML = item.body;
+    overlay.classList.add('active');
+  }
+
+  function closeInfoModal(e) {
+    if (e && e.target !== e.currentTarget && e.target.tagName !== 'BUTTON') return;
+    const overlay = document.getElementById('infoModalOverlay');
+    if (overlay) overlay.classList.remove('active');
+  }
+
   const DEFAULT_VIDEOS = [
     { title:'Wawancara Eksklusif: Menteri Pariwisata dan Ekonomi Kreatif', views:'128K', img:'img/desa_wisata.png' },
     { title:'Highlight Timnas Indonesia di Kualifikasi Piala Asia', views:'890K', img:'img/timnas_football.png' },
@@ -1790,7 +2011,7 @@ function renderLatestColumn() {
   const latest = ARTICLES.slice(0, 6);
   latestList.innerHTML = latest.map(a => `
     <div class="latest-card" onclick="openArticle(${a.id})">
-      <img src="${a.img}" alt="${a.title}" loading="lazy">
+      <img src="${getArticleImg(a.img)}" alt="${a.title.replace(/"/g, '&quot;')}" loading="lazy" onerror="this.src='img/desa_wisata.png'">
       <div class="lc-content">
         <h3>${a.title}</h3>
         <div class="lc-meta">
@@ -1811,7 +2032,7 @@ function renderBeritaUtama() {
   
   container.innerHTML = `
     <div class="editorial-headline" onclick="openArticle(${top[0].id})" style="cursor:pointer">
-      <img src="${top[0].img || 'img/desa_wisata.png'}" alt="${top[0].title}" loading="eager">
+      <img src="${getArticleImg(top[0].img)}" alt="${top[0].title.replace(/"/g, '&quot;')}" loading="eager" onerror="this.src='img/desa_wisata.png'">
       <div class="eh-overlay">
         <div style="display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:8px">
           <span class="${badgeClass(top[0].badge)}">${top[0].type}</span>
@@ -1829,7 +2050,7 @@ function renderBeritaUtama() {
       ${top.slice(1).map(a => `
         <div class="editorial-subcard" onclick="openArticle(${a.id})" style="cursor:pointer">
           <div style="position:relative">
-            <img src="${a.img || 'img/desa_wisata.png'}" alt="${a.title}" loading="lazy">
+            <img src="${getArticleImg(a.img)}" alt="${a.title.replace(/"/g, '&quot;')}" loading="lazy" onerror="this.src='img/desa_wisata.png'">
             <button class="bookmark-btn-for-${a.id}" onclick="toggleBookmark(event, ${a.id})" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.4);border:none;cursor:pointer;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;transition:var(--tr);z-index:2">${bookmarkSvg(a.id, false)}</button>
           </div>
           <div class="esc-body">
@@ -1861,8 +2082,9 @@ function renderFilters() {
 }
 
 function articleCard(a, wide) {
+  const safeImg = getArticleImg(a.img);
   return `<article class="article-card visible${wide ? ' wide' : ''}" onclick="openArticle(${a.id})">
-    <img src="${a.img}" alt="${a.title}" loading="lazy">
+    <img src="${safeImg}" alt="${a.title.replace(/"/g, '&quot;')}" loading="lazy" onerror="this.src='img/desa_wisata.png'">
     <div class="article-body">
       <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
         <span class="${badgeClass(a.badge)}" onclick="event.stopPropagation(); selectCategory('${a.cat}')" style="cursor:pointer">${a.type}</span>
@@ -2005,7 +2227,7 @@ function renderEssayScroll() {
   const items = ARTICLES.filter(a => a.cat === 'essay');
   document.getElementById('essayScroll').innerHTML = items.map(a => `
     <div class="scroll-card" onclick="openArticle(${a.id})">
-      <img src="${a.img}" alt="${a.title}" loading="lazy">
+      <img src="${getArticleImg(a.img)}" alt="${a.title.replace(/"/g, '&quot;')}" loading="lazy" onerror="this.src='img/desa_wisata.png'">
       <div class="sc-body">
         <span class="${badgeClass(a.badge)}" onclick="event.stopPropagation(); selectCategory('${a.cat}')" style="cursor:pointer">${a.type}</span>
         <h4>${a.title}</h4>
@@ -2018,13 +2240,13 @@ function renderVideos() {
   const v = VIDEOS.slice(0, 4);
   document.getElementById('videoGrid').innerHTML = `
     <div class="video-main" onclick="showToast('Memutar: ' + '${v[0].title.substring(0,40)}...')">
-      <img src="${v[0].img}" alt="">
+      <img src="${getArticleImg(v[0].img)}" alt="" onerror="this.src='img/desa_wisata.png'">
       <div class="play-btn">▶</div>
       <div class="video-info"><span class="badge badge-berita" onclick="event.stopPropagation(); selectCategory('video')" style="cursor:pointer">Video</span><h3 style="margin-top:8px;font-size:1rem">${v[0].title}</h3><span style="font-size:.78rem;opacity:.8">${v[0].views} views</span></div>
     </div>
     <div class="video-list">${v.slice(1).map(x => `
       <div class="video-item" onclick="showToast('Memutar: ' + '${x.title.substring(0,35)}...')">
-        <div class="video-thumb-wrap"><img class="video-thumb" src="${x.img}" alt=""></div>
+        <div class="video-thumb-wrap"><img class="video-thumb" src="${getArticleImg(x.img)}" alt="" onerror="this.src='img/desa_wisata.png'"></div>
         <div><h4 style="font-size:.85rem;line-height:1.35">${x.title}</h4><span style="font-size:.72rem;color:var(--gray-400)">${x.views}</span></div>
       </div>`).join('')}
     </div>`;
@@ -2037,13 +2259,13 @@ function renderPhotoSection() {
   if (p.length === 0) return;
   pEl.innerHTML = `
     <div class="photo-main" onclick="openArticle(${p[0].id})">
-      <img src="${p[0].img}" alt="">
+      <img src="${getArticleImg(p[0].img)}" alt="" onerror="this.src='img/desa_wisata.png'">
       <div class="cam-btn">📷</div>
       <div class="photo-info"><span class="${badgeClass(p[0].badge)}" onclick="event.stopPropagation(); selectCategory('foto')" style="cursor:pointer">${p[0].type}</span><h3 style="margin-top:8px;font-size:1rem">${p[0].title}</h3><span style="font-size:.78rem;opacity:.8">${p[0].date}</span></div>
     </div>
     <div class="photo-list">${p.slice(1).map(x => `
       <div class="photo-item" onclick="openArticle(${x.id})">
-        <div class="photo-thumb-wrap"><img class="photo-thumb" src="${x.img}" alt=""></div>
+        <div class="photo-thumb-wrap"><img class="photo-thumb" src="${getArticleImg(x.img)}" alt="" onerror="this.src='img/desa_wisata.png'"></div>
         <div><h4 style="font-size:.85rem;line-height:1.35">${x.title}</h4><span style="font-size:.72rem;color:var(--gray-400)">${x.date}</span></div>
       </div>`).join('')}
     </div>`;
@@ -2059,7 +2281,7 @@ function renderCategoryGrid(id, cat) {
   if (!el) return;
   const list = ARTICLES.filter(a => a.cat === cat);
   if (id.includes('Scroll')) {
-    el.innerHTML = list.map(a => `<div class="scroll-card" onclick="openArticle(${a.id})"><img src="${a.img}" alt=""><div class="sc-body"><span class="${badgeClass(a.badge)}" onclick="event.stopPropagation(); selectCategory('${a.cat}')" style="cursor:pointer">${a.type}</span><h4>${a.title}</h4><span style="font-size:.72rem;color:var(--gray-400)">${a.date}</span></div></div>`).join('');
+    el.innerHTML = list.map(a => `<div class="scroll-card" onclick="openArticle(${a.id})"><img src="${getArticleImg(a.img)}" alt="" onerror="this.src='img/desa_wisata.png'"><div class="sc-body"><span class="${badgeClass(a.badge)}" onclick="event.stopPropagation(); selectCategory('${a.cat}')" style="cursor:pointer">${a.type}</span><h4>${a.title}</h4><span style="font-size:.72rem;color:var(--gray-400)">${a.date}</span></div></div>`).join('');
   } else {
     el.innerHTML = list.slice(0, 4).map(a => articleCard(a, false)).join('');
   }
@@ -2276,9 +2498,9 @@ function renderStories() {
   container.innerHTML = items.map(a => `
     <div class="story-circle" onclick="openArticle(${a.id})">
       <div class="story-img-wrap">
-        <img src="${a.img}" alt="${a.title}">
+        <img src="${getArticleImg(a.img)}" alt="${a.title.replace(/"/g, '&quot;')}" onerror="this.src='img/desa_wisata.png'">
       </div>
-      <div class="story-label">${a.author.split(' ')[0]}</div>
+      <div class="story-label">${(a.author || 'Pucuk').split(' ')[0]}</div>
     </div>
   `).join('');
 }
@@ -2395,7 +2617,7 @@ function openArticle(id) {
   }
 
   const safeTitle = related ? related.title.replace(/"/g, '&quot;') : '';
-  const safeImg = (related && related.img) ? related.img : 'img/desa_wisata.png';
+  const safeImg = getArticleImg(related ? related.img : '');
   const relatedRubrik = related ? (related.type || related.cat || 'Berita') : '';
   const relatedAuthor = related ? (related.author || 'Redaksi') : '';
 
@@ -2411,9 +2633,12 @@ function openArticle(id) {
       <div class="baca-juga-body">
         <img src="${safeImg}" alt="${safeTitle}" class="baca-juga-thumb" onerror="this.src='img/desa_wisata.png'">
         <div class="baca-juga-content">
-          <a href="#article-${related.id}" class="baca-juga-title" onclick="event.preventDefault(); openArticle(${related.id});">${related.title}</a>
+          <a href="?id=${related.id}" class="baca-juga-title" onclick="event.preventDefault(); openArticle(${related.id});">${related.title}</a>
           <div class="baca-juga-footer">
-            <span>Oleh <b>${relatedAuthor}</b></span>
+            <span style="display:inline-flex;align-items:center;gap:4px">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              Oleh <b>${relatedAuthor}</b>
+            </span>
             <span class="baca-juga-cta">Baca selengkapnya <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span>
           </div>
         </div>
@@ -2433,7 +2658,7 @@ function openArticle(id) {
     paragraphs = `<p>${contentText}</p>` + (bacaJugaHtml ? bacaJugaHtml : '');
   }
   const tagsList = Array.isArray(a.tags) ? a.tags : [];
-  const imgSrc = a.img || 'img/desa_wisata.png';
+  const imgSrc = getArticleImg(a.img);
   const authorName = a.author || 'Redaksi';
   const pubDate = a.date || '';
   const badgeName = a.badge || 'berita';
@@ -2458,7 +2683,7 @@ function openArticle(id) {
         
         <!-- Hero Image -->
         <div style="position:relative;margin-bottom:24px;border-radius:12px;overflow:hidden;box-shadow:var(--shadow)">
-          <img src="${imgSrc}" alt="${a.title}" style="width:100%;aspect-ratio:16/9;height:auto;object-fit:cover;display:block">
+          <img src="${imgSrc}" alt="${a.title.replace(/"/g, '&quot;')}" style="width:100%;aspect-ratio:16/9;height:auto;object-fit:cover;display:block" onerror="this.src='img/desa_wisata.png'">
           <button id="modalBookmarkBtn" class="bookmark-btn-for-${a.id} light-bg" onclick="toggleBookmark(event, ${a.id})" style="position:absolute;top:16px;right:16px;background:var(--bg-card);border:1px solid var(--border-color);cursor:pointer;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;box-shadow:var(--shadow);z-index:10">${bookmarkSvg(a.id, true)}</button>
         </div>
 
@@ -2468,12 +2693,19 @@ function openArticle(id) {
         ${tagsList.length > 0 ? `<div style="margin-top:24px;display:flex;flex-wrap:wrap;gap:8px">${tagsList.map(t => `<span style="padding:4px 12px;background:var(--gray-100);color:var(--green-700);border-radius:50px;font-size:0.78rem;font-weight:600">#${t}</span>`).join('')}</div>` : ''}
         
         <!-- Share Bar -->
-        <div class="share-bar" style="margin-top:30px;padding-top:20px;border-top:1px solid var(--border-color);display:flex;gap:10px;flex-wrap:wrap">
-          <button onclick="navigator.clipboard && navigator.clipboard.writeText(window.location.href); showToast('Link artikel berhasil disalin!')" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;border:1px solid var(--border-color);background:var(--bg-card);cursor:pointer;font-size:0.82rem;font-weight:600">
-            Salin Link
-          </button>
-          <button onclick="window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(document.title + ' ' + window.location.href), '_blank')" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;border:1px solid #25d366;color:#25d366;background:var(--bg-card);cursor:pointer;font-size:0.82rem;font-weight:600">
+        <div class="share-bar" style="margin-top:30px;padding-top:20px;border-top:1px solid var(--border-color);display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:0.85rem;font-weight:700;color:var(--text-main);margin-right:4px">Bagikan Berita:</span>
+          <button onclick="shareArticleWhatsApp('${a.title.replace(/'/g, "\\'")}', ${a.id})" style="display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;border:1px solid #25d366;color:#fff;background:#25d366;cursor:pointer;font-size:0.84rem;font-weight:600;box-shadow:0 2px 8px rgba(37,211,102,0.25)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
             WhatsApp
+          </button>
+          <button onclick="shareArticleNative('${a.title.replace(/'/g, "\\'")}', ${a.id})" style="display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;border:1px solid var(--green-600);color:#fff;background:var(--green-700);cursor:pointer;font-size:0.84rem;font-weight:600">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+            Bagikan
+          </button>
+          <button onclick="copyArticleLink(${a.id})" style="display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-main);cursor:pointer;font-size:0.84rem;font-weight:600">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            Salin Link
           </button>
         </div>
 
@@ -2496,8 +2728,9 @@ function openArticle(id) {
   
   try {
     document.title = a.title + ' — Pucuk Pena';
-    if (window.location.hash !== '#article-' + a.id) {
-      history.pushState(null, null, '#article-' + a.id);
+    const cleanUrl = window.location.origin + window.location.pathname + '?id=' + a.id;
+    if (window.location.search !== '?id=' + a.id) {
+      history.pushState({ articleId: a.id }, a.title, cleanUrl);
     }
   } catch(e) {}
 }

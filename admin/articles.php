@@ -35,6 +35,9 @@ if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ── Handle gambar upload ──
     $img = trim($_POST['img_current'] ?? '');
+    if (empty($img) && !empty($_POST['img_url_manual'])) {
+        $img = trim($_POST['img_url_manual']);
+    }
     if (isset($_FILES['img_file']) && $_FILES['img_file']['error'] === UPLOAD_ERR_OK) {
         $uploadDir = __DIR__ . '/../uploads/';
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
@@ -51,6 +54,10 @@ if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $error = 'Format gambar tidak didukung. Gunakan JPG, PNG, atau WebP.';
         }
+    }
+    // Pastikan artikel selalu memiliki gambar valid
+    if (empty($img)) {
+        $img = 'img/desa_wisata.png';
     }
 
     // ── Handle tags ──
@@ -308,14 +315,29 @@ function badgeCls($b) {
           <div class="panel">
             <div class="panel-header"><h2>Gambar Artikel</h2></div>
             <div class="panel-body">
-              <?php $imgSrc = $art['img'] ?? ''; ?>
-              <?php if ($imgSrc): ?>
-                <img src="../<?= htmlspecialchars($imgSrc) ?>" id="imgPreview" class="img-preview" style="width:200px;height:130px;margin-bottom:12px;border-radius:8px;object-fit:cover">
-              <?php else: ?>
-                <div id="imgPreview" style="width:200px;height:130px;border-radius:8px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;margin-bottom:12px;color:var(--gray-400);font-size:0.85rem;border:2px dashed var(--gray-200)">
-                  Belum ada gambar
+              <?php 
+              $imgSrc = $art['img'] ?? ''; 
+              $previewSrc = '';
+              if ($imgSrc) {
+                  $previewSrc = (str_starts_with($imgSrc, 'http://') || str_starts_with($imgSrc, 'https://')) ? $imgSrc : '../' . ltrim($imgSrc, '/');
+              }
+              ?>
+              <div style="margin-bottom:12px">
+                <img src="<?= htmlspecialchars($previewSrc ?: '../img/desa_wisata.png') ?>" id="imgPreview" class="img-preview" style="width:220px;height:140px;border-radius:8px;object-fit:cover;display:block;border:1px solid var(--gray-200)" onerror="this.src='../img/desa_wisata.png'">
+              </div>
+
+              <div class="form-group" style="margin-bottom:14px">
+                <label>Pilih Gambar Cepat (Preset):</label>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+                  <button type="button" class="btn btn-sm btn-outline" onclick="selectPresetImg('img/desa_wisata.png')">Desa Wisata</button>
+                  <button type="button" class="btn btn-sm btn-outline" onclick="selectPresetImg('img/g20_summit.png')">G20 Summit</button>
+                  <button type="button" class="btn btn-sm btn-outline" onclick="selectPresetImg('img/ai_startup.png')">AI Startup</button>
+                  <button type="button" class="btn btn-sm btn-outline" onclick="selectPresetImg('img/timnas_football.png')">Timnas</button>
+                  <button type="button" class="btn btn-sm btn-outline" onclick="selectPresetImg('img/rupiah_exchange.png')">Ekonomi</button>
+                  <button type="button" class="btn btn-sm btn-outline" onclick="selectPresetImg('img/pendidikan_sekolah.png')">Pendidikan</button>
+                  <button type="button" class="btn btn-sm btn-outline" onclick="selectPresetImg('img/maraton_borobudur.png')">Olahraga</button>
                 </div>
-              <?php endif; ?>
+              </div>
 
               <div class="form-group" style="margin-bottom:10px">
                 <label>Upload Gambar Baru (JPG, PNG, WebP)</label>
@@ -326,7 +348,7 @@ function badgeCls($b) {
                 <input type="text" name="img_url_manual" id="imgUrlManual" class="form-control"
                        value="<?= htmlspecialchars($imgSrc) ?>"
                        placeholder="img/nama_file.png atau https://...">
-                <small style="color:var(--gray-400);font-size:0.76rem">Gambar dari folder /img/ tersedia: desa_wisata.png, g20_summit.png, dll.</small>
+                <small style="color:var(--gray-400);font-size:0.76rem">Gambar dari folder /img/ tersedia atau gunakan link URL gambar online.</small>
               </div>
             </div>
           </div>
@@ -479,7 +501,21 @@ const currentField = document.getElementById('imgCurrentField');
 if (manualUrl && currentField) {
   manualUrl.addEventListener('input', () => {
     currentField.value = manualUrl.value;
+    const preview = document.getElementById('imgPreview');
+    if (preview && manualUrl.value.trim()) {
+      const src = manualUrl.value.trim();
+      preview.src = (src.startsWith('http://') || src.startsWith('https://')) ? src : '../' + src.replace(/^\/+/, '');
+    }
   });
+}
+
+function selectPresetImg(path) {
+  const manual = document.getElementById('imgUrlManual');
+  const current = document.getElementById('imgCurrentField');
+  const preview = document.getElementById('imgPreview');
+  if (manual) manual.value = path;
+  if (current) current.value = path;
+  if (preview) preview.src = '../' + path;
 }
 
 function confirmDelete(id, title) {
