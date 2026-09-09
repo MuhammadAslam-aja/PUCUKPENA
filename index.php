@@ -508,6 +508,14 @@ try {
     .modal-content .lead{font-size:1.05rem;color:var(--text-muted);margin-bottom:20px;line-height:1.7;border-left:4px solid var(--green-500);padding-left:16px;text-align:justify}
     .modal-content .body-text{font-size:.95rem;color:var(--text-main);line-height:1.85;text-align:justify}
     .modal-content .body-text p{margin-bottom:16px}
+    /* Baca juga inside article */
+    .baca-juga-box{border-left:4px solid #002e7a;padding:6px 0 6px 14px;margin:22px 0;text-align:left}
+    body.dark-theme .baca-juga-box{border-left-color:#3b82f6}
+    .baca-juga-label{font-weight:700;font-size:.95rem;color:var(--text-main);margin-bottom:6px;font-family:inherit}
+    .baca-juga-link{display:block;font-weight:700;font-size:1.05rem;line-height:1.45;color:#002e7a;text-decoration:none;transition:color .15s ease-in-out;font-family:inherit}
+    .baca-juga-link:hover{text-decoration:underline;color:#001e54}
+    body.dark-theme .baca-juga-link{color:#60a5fa}
+    body.dark-theme .baca-juga-link:hover{color:#93c5fd}
     .modal-close{position:fixed;top:20px;right:20px;width:44px;height:44px;border:none;border-radius:50%;background:var(--bg-card);color:var(--text-main);border:1px solid var(--border-color);font-size:1.2rem;cursor:pointer;z-index:2001;box-shadow:var(--shadow);display:none}
     .modal-overlay.active+.modal-close,.modal-close.show{display:grid;place-items:center}
     .share-bar{display:flex;gap:8px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border-color);flex-wrap:wrap}
@@ -1213,7 +1221,7 @@ try {
         <li><a href="#pendidikan" data-cat="pendidikan">Pendidikan</a></li>
         <li><a href="#olahraga" data-cat="olahraga">Olahraga</a></li>
         <li><a href="#ekonomi" data-cat="ekonomi">Ekonomi</a></li>
-        <li><a href="#hikmah" data-cat="hikmah">Hikmat</a></li>
+        <li><a href="#hikmah" data-cat="hikmah">Hikmah</a></li>
         <li><a href="#foto" data-cat="foto">Foto</a></li>
         <li><a href="#bookmark" data-cat="bookmark"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; vertical-align: middle;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>Bookmark</a></li>
       </ul>
@@ -1342,7 +1350,7 @@ try {
   <!-- More sections by category -->
   <div class="container" style="padding-bottom:40px">
     <div class="section-block" id="hikmah">
-      <div class="section-head"><h2>Hikmat</h2><a href="#" onclick="selectCategory('hikmah'); return false">Semua →</a></div>
+      <div class="section-head"><h2>Hikmah</h2><a href="#" onclick="selectCategory('hikmah'); return false">Semua →</a></div>
       <div class="scroll-row" id="hikmahScroll"></div>
     </div>
     <div class="ad-wrap">
@@ -1410,7 +1418,7 @@ try {
           </div>
         </div>
         <div><h4>Kategori Utama</h4><ul class="footer-links"><li><a href="#" onclick="selectCategory('berita'); return false">Berita Utama</a></li><li><a href="#" onclick="selectCategory('essay'); return false">Essay</a></li><li><a href="#" onclick="selectCategory('opini'); return false">Opini</a></li><li><a href="#" onclick="selectCategory('pendidikan'); return false">Pendidikan</a></li></ul></div>
-        <div><h4>Rubrik Lainnya</h4><ul class="footer-links"><li><a href="#" onclick="selectCategory('olahraga'); return false">Olahraga</a></li><li><a href="#" onclick="selectCategory('ekonomi'); return false">Ekonomi</a></li><li><a href="#" onclick="selectCategory('hikmah'); return false">Hikmat</a></li><li><a href="#" onclick="selectCategory('foto'); return false">Foto</a></li><li><a href="#" onclick="selectCategory('bookmark'); return false">Berita Disimpan</a></li></ul></div>
+        <div><h4>Rubrik Lainnya</h4><ul class="footer-links"><li><a href="#" onclick="selectCategory('olahraga'); return false">Olahraga</a></li><li><a href="#" onclick="selectCategory('ekonomi'); return false">Ekonomi</a></li><li><a href="#" onclick="selectCategory('hikmah'); return false">Hikmah</a></li><li><a href="#" onclick="selectCategory('foto'); return false">Foto</a></li><li><a href="#" onclick="selectCategory('bookmark'); return false">Berita Disimpan</a></li></ul></div>
         <div><h4>Bantuan & Kontak</h4><ul class="footer-links"><li><a href="#">Tentang Kami</a></li><li><a href="#">Susunan Redaksi</a></li><li><a href="#">Kontak Kami</a></li><li><a href="#">Syarat & Ketentuan</a></li><li><a href="#">Kebijakan Privasi</a></li></ul></div>
       </div>
       <div class="footer-bottom">
@@ -1549,7 +1557,7 @@ function genImg(id, colors, icon, label) {
   { time:'19:00', event:'Prime Time News Live' }
 ];
 
-const FILTERS = ['Semua','Berita Utama','Essay','Opini','Pendidikan','Olahraga','Ekonomi','Hikmat','Foto'];
+const FILTERS = ['Semua','Berita Utama','Essay','Opini','Pendidikan','Olahraga','Ekonomi','Hikmah','Foto'];
 
 /* ===== RENDER FUNCTIONS ===== */
 function badgeClass(b) { return 'badge badge-' + b; }
@@ -1687,7 +1695,7 @@ function toggleSectionsVisibility(filter) {
     'video',                    // Video section
     'foto-section',             // Galeri Foto section
     'nasional',                 // Investigasi section (id="nasional")
-    'hikmah',                   // Hikmat section
+    'hikmah',                   // Hikmah section
     'ekonomi',                  // Ekonomi section
     'pendidikan',               // Pendidikan section
     'olahraga',                 // Olahraga section
@@ -2165,7 +2173,32 @@ function openArticle(id) {
   }
   
   const contentText = a.content || a.excerpt || '';
-  const paragraphs = contentText.split('\n\n').filter(Boolean).map(p => `<p style="margin-bottom:16px;line-height:1.85">${p}</p>`).join('') || `<p>${contentText}</p>`;
+  const pList = contentText.split('\n\n').filter(Boolean);
+
+  // Cari artikel rekomendasi untuk widget "Baca juga:" di tengah artikel
+  let related = ARTICLES.find(x => x.cat === a.cat && Number(x.id) !== Number(a.id) && x.type !== 'video' && x.type !== 'foto');
+  if (!related) {
+    related = ARTICLES.find(x => Number(x.id) !== Number(a.id) && x.type !== 'video' && x.type !== 'foto');
+  }
+
+  const bacaJugaHtml = related ? `
+    <div class="baca-juga-box">
+      <div class="baca-juga-label">Baca juga:</div>
+      <a href="#" class="baca-juga-link" onclick="openArticle(${related.id}); return false;">${related.title}</a>
+    </div>
+  ` : '';
+
+  let paragraphs = '';
+  if (pList.length > 1 && bacaJugaHtml) {
+    const mid = Math.max(1, Math.floor(pList.length / 2));
+    const firstHalf = pList.slice(0, mid).map(p => `<p style="margin-bottom:16px;line-height:1.85">${p}</p>`).join('');
+    const secondHalf = pList.slice(mid).map(p => `<p style="margin-bottom:16px;line-height:1.85">${p}</p>`).join('');
+    paragraphs = firstHalf + bacaJugaHtml + secondHalf;
+  } else if (pList.length > 0) {
+    paragraphs = pList.map(p => `<p style="margin-bottom:16px;line-height:1.85">${p}</p>`).join('') + (bacaJugaHtml ? bacaJugaHtml : '');
+  } else {
+    paragraphs = `<p>${contentText}</p>` + (bacaJugaHtml ? bacaJugaHtml : '');
+  }
   const tagsList = Array.isArray(a.tags) ? a.tags : [];
   const imgSrc = a.img || 'img/desa_wisata.png';
   const authorName = a.author || 'Redaksi';
@@ -2225,6 +2258,7 @@ function openArticle(id) {
     </article>`;
   
   showView('articleDetailView');
+  try { window.scrollTo({ top: 0, behavior: 'instant' }); } catch(e) { window.scrollTo(0, 0); }
   renderComments(a.id);
   
   try {
@@ -2273,7 +2307,7 @@ function selectCategory(cat) {
     'pendidikan': { title: 'Pendidikan', desc: 'Artikel, ulasan kebijakan, dan kabar dunia pendidikan serta peningkatan literasi.' },
     'olahraga': { title: 'Olahraga', desc: 'Kabar pertandingan terbaru, profil atlet, dan liputan berbagai event olahraga nasional dan dunia.' },
     'ekonomi': { title: 'Ekonomi', desc: 'Ulasan finansial, dinamika bisnis, pasar modal, serta analisis ekonomi terkini.' },
-    'hikmah': { title: 'Hikmat', desc: 'Renungan nilai-nilai kehidupan, spiritualitas, khazanah budaya, dan moralitas.' },
+    'hikmah': { title: 'Hikmah', desc: 'Renungan nilai-nilai kehidupan, spiritualitas, khazanah budaya, dan moralitas.' },
     'foto': { title: 'Foto', desc: 'Rekaman visual dan cerita di balik lensa kamera para jurnalis Pucuk Pena.' },
     'bookmark': { title: 'Berita Disimpan', desc: 'Daftar artikel pilihan Anda yang disimpan untuk dibaca nanti.' },
     'video': { title: 'Pucuk Pena TV', desc: 'Video liputan khusus, wawancara mendalam, dan dokumenter eksklusif.' }

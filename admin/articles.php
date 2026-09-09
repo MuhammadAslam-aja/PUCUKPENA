@@ -349,7 +349,7 @@ function badgeCls($b) {
               <div class="form-group">
                 <label>Tipe Konten (Rubrik)</label>
                 <select name="type" class="form-control">
-                  <?php foreach (['Berita Utama', 'Essay', 'Opini', 'Pendidikan', 'Olahraga', 'Ekonomi', 'Hikmat', 'Foto', 'Video'] as $t): ?>
+                  <?php foreach (['Berita Utama', 'Essay', 'Opini', 'Pendidikan', 'Olahraga', 'Ekonomi', 'Hikmah', 'Foto', 'Video'] as $t): ?>
                     <option value="<?= $t ?>" <?= (strcasecmp($art['type']??'', $t)===0)?'selected':'' ?>><?= $t ?></option>
                   <?php endforeach; ?>
                 </select>
@@ -366,7 +366,7 @@ function badgeCls($b) {
                     'pendidikan' => 'Pendidikan',
                     'olahraga'   => 'Olahraga',
                     'ekonomi'    => 'Ekonomi',
-                    'hikmah'     => 'Hikmat',
+                    'hikmah'     => 'Hikmah',
                     'foto'       => 'Foto',
                     'video'      => 'Video'
                   ];

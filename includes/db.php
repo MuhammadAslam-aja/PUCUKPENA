@@ -95,6 +95,8 @@ function getDB(): PDO {
             $pdo->exec("UPDATE `ads` SET `image` = 'img/ai_startup.png' WHERE `slot` = 'native1' AND (`image` IS NULL OR `image` = '')");
             $pdo->exec("UPDATE `ads` SET `image` = 'img/timnas_football.png' WHERE `slot` = 'native2' AND (`image` IS NULL OR `image` = '')");
         }
+        // Migrasi Hikmat -> Hikmah jika masih ada artikel dengan type 'Hikmat'
+        $pdo->exec("UPDATE `articles` SET `type` = 'Hikmah' WHERE `type` = 'Hikmat'");
     } catch (Exception $e) {
         // Lanjutkan jika migrasi telah terpasang
     }

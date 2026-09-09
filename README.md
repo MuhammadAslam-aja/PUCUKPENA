@@ -7,9 +7,9 @@ Portal berita online dinamis dengan arsitektur **PHP Native + MySQL**, desain an
 ## Fitur Utama
 
 - **Frontend Dinamis**:
-  - Halaman Beranda (Headline Berita Utama, Rubrik Opini, Essay, Hikmat, Ekonomi, Pendidikan, Olahraga, Galeri Foto, dan TV Video).
+  - Halaman Beranda (Headline Berita Utama, Rubrik Opini, Essay, Hikmah, Ekonomi, Pendidikan, Olahraga, Galeri Foto, dan TV Video).
   - Single Page Application (SPA) routing instan tanpa reload browser.
-  - Pembaca Berita Lengkap (`#article-[ID]`) dengan kutipan, foto hero, tagar, tombol bagikan (WhatsApp, dll.), dan sistem komentar interaktif.
+  - Pembaca Berita Lengkap (`#article-[ID]`) dengan kutipan, widget rekomendasi "Baca juga:" di tengah artikel, foto hero, tagar, tombol bagikan (WhatsApp, dll.), dan sistem komentar interaktif terhubung ke database.
   - Mode Gelap (Dark Mode) & Pencarian Cepat (Live Search).
   - Simpan Berita (Bookmark / Read Later).
   - Dukungan responsif multi-device dengan pencegahan *over-swipe*.
