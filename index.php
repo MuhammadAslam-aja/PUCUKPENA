@@ -508,14 +508,138 @@ try {
     .modal-content .lead{font-size:1.05rem;color:var(--text-muted);margin-bottom:20px;line-height:1.7;border-left:4px solid var(--green-500);padding-left:16px;text-align:justify}
     .modal-content .body-text{font-size:.95rem;color:var(--text-main);line-height:1.85;text-align:justify}
     .modal-content .body-text p{margin-bottom:16px}
-    /* Baca juga inside article */
-    .baca-juga-box{border-left:4px solid #002e7a;padding:6px 0 6px 14px;margin:22px 0;text-align:left}
-    body.dark-theme .baca-juga-box{border-left-color:#3b82f6}
-    .baca-juga-label{font-weight:700;font-size:.95rem;color:var(--text-main);margin-bottom:6px;font-family:inherit}
-    .baca-juga-link{display:block;font-weight:700;font-size:1.05rem;line-height:1.45;color:#002e7a;text-decoration:none;transition:color .15s ease-in-out;font-family:inherit}
-    .baca-juga-link:hover{text-decoration:underline;color:#001e54}
-    body.dark-theme .baca-juga-link{color:#60a5fa}
-    body.dark-theme .baca-juga-link:hover{color:#93c5fd}
+    /* ===== KARTU BACA JUGA (IN-ARTICLE RECOMMENDATION) ===== */
+    .baca-juga-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-left: 5px solid var(--green-600);
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin: 28px 0;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      cursor: pointer;
+      display: block;
+      text-decoration: none;
+      position: relative;
+    }
+    .baca-juga-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--green-500);
+      border-left-color: var(--green-600);
+      box-shadow: 0 8px 24px rgba(6, 78, 59, 0.12);
+    }
+    body.dark-theme .baca-juga-card {
+      background: #1e293b;
+      border-color: #334155;
+      border-left-color: var(--green-500);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    }
+    body.dark-theme .baca-juga-card:hover {
+      border-color: var(--green-400);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+    .baca-juga-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .baca-juga-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--green-100);
+      color: var(--green-800);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    body.dark-theme .baca-juga-badge {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--green-400);
+    }
+    .baca-juga-rubrik {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .baca-juga-body {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .baca-juga-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .baca-juga-title {
+      font-size: 1.02rem;
+      font-weight: 700;
+      line-height: 1.42;
+      color: var(--text-main);
+      margin: 0 0 6px 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .baca-juga-card:hover .baca-juga-title {
+      color: var(--green-600);
+    }
+    body.dark-theme .baca-juga-card:hover .baca-juga-title {
+      color: var(--green-400);
+    }
+    .baca-juga-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    .baca-juga-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 700;
+      color: var(--green-700);
+      font-size: 0.78rem;
+      transition: gap 0.2s ease;
+    }
+    body.dark-theme .baca-juga-cta {
+      color: var(--green-400);
+    }
+    .baca-juga-card:hover .baca-juga-cta {
+      gap: 8px;
+    }
+    .baca-juga-thumb {
+      width: 100px;
+      height: 72px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    @media (max-width: 580px) {
+      .baca-juga-thumb {
+        width: 78px;
+        height: 64px;
+      }
+      .baca-juga-title {
+        font-size: 0.92rem;
+      }
+      .baca-juga-card {
+        padding: 12px 14px;
+      }
+    }
     .modal-close{position:fixed;top:20px;right:20px;width:44px;height:44px;border:none;border-radius:50%;background:var(--bg-card);color:var(--text-main);border:1px solid var(--border-color);font-size:1.2rem;cursor:pointer;z-index:2001;box-shadow:var(--shadow);display:none}
     .modal-overlay.active+.modal-close,.modal-close.show{display:grid;place-items:center}
     .share-bar{display:flex;gap:8px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border-color);flex-wrap:wrap}
@@ -2154,6 +2278,10 @@ function getActiveView() {
 }
 
 function goBack() {
+  if (window.history.length > 1 && window.location.hash.startsWith('#article-')) {
+    window.history.back();
+    return;
+  }
   if (historyStack.length > 0) {
     const prevView = historyStack.pop();
     showView(prevView);
@@ -2175,16 +2303,42 @@ function openArticle(id) {
   const contentText = a.content || a.excerpt || '';
   const pList = contentText.split('\n\n').filter(Boolean);
 
-  // Cari artikel rekomendasi untuk widget "Baca juga:" di tengah artikel
-  let related = ARTICLES.find(x => x.cat === a.cat && Number(x.id) !== Number(a.id) && x.type !== 'video' && x.type !== 'foto');
-  if (!related) {
-    related = ARTICLES.find(x => Number(x.id) !== Number(a.id) && x.type !== 'video' && x.type !== 'foto');
+  // Ambil artikel terkait yang betul-betul ada di database dan bukan artikel saat ini
+  const otherArticles = ARTICLES.filter(x => Number(x.id) !== Number(a.id) && x.type !== 'video' && x.type !== 'foto');
+  
+  // Prioritaskan artikel dengan kategori atau rubrik yang sama
+  const sameCategory = otherArticles.filter(x => x.cat === a.cat || x.type === a.type);
+  let related = null;
+  if (sameCategory.length > 0) {
+    related = sameCategory[Number(a.id) % sameCategory.length];
+  } else if (otherArticles.length > 0) {
+    related = otherArticles[Number(a.id) % otherArticles.length];
   }
 
+  const safeTitle = related ? related.title.replace(/"/g, '&quot;') : '';
+  const safeImg = (related && related.img) ? related.img : 'img/desa_wisata.png';
+  const relatedRubrik = related ? (related.type || related.cat || 'Berita') : '';
+  const relatedAuthor = related ? (related.author || 'Redaksi') : '';
+
   const bacaJugaHtml = related ? `
-    <div class="baca-juga-box">
-      <div class="baca-juga-label">Baca juga:</div>
-      <a href="#" class="baca-juga-link" onclick="openArticle(${related.id}); return false;">${related.title}</a>
+    <div class="baca-juga-card" onclick="openArticle(${related.id}); return false;">
+      <div class="baca-juga-top">
+        <span class="baca-juga-badge">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+          BACA JUGA
+        </span>
+        <span class="baca-juga-rubrik">${relatedRubrik}</span>
+      </div>
+      <div class="baca-juga-body">
+        <img src="${safeImg}" alt="${safeTitle}" class="baca-juga-thumb" onerror="this.src='img/desa_wisata.png'">
+        <div class="baca-juga-content">
+          <a href="#article-${related.id}" class="baca-juga-title" onclick="event.preventDefault(); openArticle(${related.id});">${related.title}</a>
+          <div class="baca-juga-footer">
+            <span>Oleh <b>${relatedAuthor}</b></span>
+            <span class="baca-juga-cta">Baca selengkapnya <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span>
+          </div>
+        </div>
+      </div>
     </div>
   ` : '';
 
@@ -2915,6 +3069,7 @@ function handleUrlHash() {
 }
 
 window.addEventListener('hashchange', handleUrlHash);
+window.addEventListener('popstate', handleUrlHash);
 
 // Start app immediately
 initApp();
